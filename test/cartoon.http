@@ -1,0 +1,42 @@
+GET https://www.cartoon18.com/q/%E9%9F%93%E6%BC%AB?page=5
+
+### create a site
+POST http://localhost:8080/sites
+content-type: application/json
+
+{
+  "name": "cartoon18",
+  "displayName": "cartoon18 图片资源",
+  "crawlerType": 2
+}
+
+
+### Create a catalog
+POST http://localhost:8080/catalogs
+content-type: application/json
+
+{
+  "siteId": "653512364709f6b0b7eb0443",
+  "name": "韩漫",
+  "url": "https://www.cartoon18.com/q/%E9%9F%93%E6%BC%AB?page=1"
+}
+
+
+### submit a task running for catalog page
+POST http://localhost:8080/tasks/catalog-pages
+Content-Type: application/json
+
+{
+  "catalogId": "653512ac4709f6b0b7eb0444",
+  "url": "https://www.cartoon18.com/q/%E9%9F%93%E6%BC%AB?page=5"
+}
+
+
+### submit a novel task
+POST http://localhost:8080/tasks/novels
+Content-Type: application/json
+
+{
+  "catalogId": "653512ac4709f6b0b7eb0444",
+  "url": "https://www.cartoon18.com/v/W0eZ4"
+}

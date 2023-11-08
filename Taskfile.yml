@@ -1,0 +1,45 @@
+version: '3'
+
+#  includes:
+
+env:
+  CRAWLER_IMAGE: '{{ .DOCKER_ADDR }}/{{ .DOCKER_REPO }}/crawler:{{ .RELEASE_VERSION }}'
+
+tasks:
+  docs:
+    desc: generate documents
+    cmds:
+      # 每次执行都要确保GOPATH正常，且接口变动后，执行swag init
+      - echo $GOPATH
+      - swag init --g main.go
+
+  local_docker: #使用本地的可执行文件编译Docker
+    desc: locally build a docker image after code compiled
+    cmds:
+      - task: build
+      - task: docker
+
+  build:
+    desc: build a executable file
+    deps:
+      - clean
+    cmds:
+      - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -ldflags="-s -w" -o bin/crawlers  main.go
+
+  clean:
+    cmds:
+      - rm -rf bin/crawlers
+
+  docker:
+    desc: build a docker image
+    deps: [ build ]
+    cmds:
+      - docker build -f docker/Dockerfile_with_bin -t $CRAWLER_IMAGE --rm  .
+
+  push_docker:
+    desc: tag the existing docker image and push it into remote repository
+    deps: [ docker ]
+    cmds:
+#      - docker tag home.com/crawler repo.home.com/crawler:${docker_version}
+      - docker login $DOCKER_ADDR -u $REPO_USER -p $REPO_PASSWORD
+      - docker push $CRAWLER_IMAGE

@@ -1,0 +1,167 @@
+applicationName: crawlers
+
+http:
+  address: 0.0.0.0
+  port: 8080
+  proxy: http://localhost:10809
+
+
+redis:
+  address: localhost:6379
+  password: db_pwd
+  defaultDb: 0
+  poolSize: 10
+  poolTimeout: 30 #seconds
+  readTimeout: 30 #seconds
+  writeTimeout: 30 #seconds
+  autoCreateConsumerGroups: true
+
+mongodb:
+  uri: "mongodb://db_user:db_pwd@127.0.0.1:27017/crawlers?retryWrites=true&w=majority&authSource=admin&maxPoolSize=10"
+  database: crawler
+#  uri: "mongodb://root:1@192.168.1.11:30472/crawler?retryWrites=true&w=majority&authSource=admin&maxPoolSize=10"
+#  database: crawlers
+
+taskPool:
+  capacity: 10000
+
+logConfig:
+  enabled: true
+  logLevel: INFO
+  logPath: ./ # 日志存放路径：${logPath}/${fileName}
+  outputToConsole: true  # 是否同时将日志打印到控制台
+  fileName: crawlers.log
+  maxSizeInMB: 50   # 日志文件的体积
+  maxAgeInDays: 5   # 最多保留天数
+  maxBackups: 2    # 允许存在几个日志备份文件
+  compress: true    # 是否压缩保存历史文件
+
+crawlerSettings:
+  catalogPageTaskParallelism: 1
+  novelTaskParallelism: 3
+  chapterTaskParallelism: 5
+  excludedNovelUrls:
+    - https://www.cartoon18.com/v/XYR6A
+    - https://www.cartoon18.com/v/XYyzR
+    - https://www.cartoon18.com/v/JW06V
+    - https://www.cartoon18.com/v/OmYmO
+    - https://www.cartoon18.com/v/54lgX
+    - https://www.cartoon18.com/v/77lYz
+    - https://www.cartoon18.com/v/EgXgZ
+    - https://www.cartoon18.com/v/JbBnw
+    - https://www.cartoon18.com/v/JZEPl
+    - https://kxkmh.top/manga/1203
+    - https://kxkmh.top/manga/1844
+    - https://kxkmh.top/manga/1197
+    - https://kxkmh.top/manga/1918
+#    - https://github.com/
+
+webSites:
+  - name: onej #最高支持catalogPage， catalog为人员名称
+    regexSettings:
+      #拼装每一页url
+      parsePageRegex: page=([^\&]+)
+      pagePrefix: "page="
+    mongoCollections:
+      novel: novel
+      catalogPage: catalogPage
+    attributes:
+      directory: /home/cloud/Desktop/onej/
+      consumers: 3
+
+  - name: nsf
+    regexSettings:
+      #拼装每一页url
+      parsePageRegex: ([^/]+)\.html
+      pagePrefix: ""
+      pageSuffix: ".html"
+    crawlerSettings:
+      catalog:
+        skipIfPresent: false
+        skipSaveIfPresent: true
+      catalogPage:
+        skipIfPresent: false
+        skipSaveIfPresent: true
+      novel:
+        skipIfPresent: false
+        skipSaveIfPresent: true
+      chapter:
+        enabled: true
+        skipIfPresent: true
+        skipSaveIfPresent: true
+
+  - name: cartoon18
+    regexSettings:
+      #拼装每一页url
+      parsePageRegex: page=([^\&]+)
+      pagePrefix: "page="
+    mongoCollections:
+      novel: novel
+      catalogPage: catalogPage
+    attributes:
+      directory: /mnt/files/comic/cartoon18/
+    crawlerSettings:
+      catalog:
+        skipIfPresent: false
+        skipSaveIfPresent: true
+      catalogPage:
+        skipIfPresent: false
+        skipSaveIfPresent: true
+      novel:
+        skipIfPresent: false
+        skipSaveIfPresent: true
+      chapter:
+        enabled: true
+        skipIfPresent: false
+        skipSaveIfPresent: true
+
+  - name: wucomic
+    regexSettings:
+      #拼装每一页url
+      parsePageRegex: page=([^\&]+)
+      pagePrefix: "page="
+    mongoCollections:
+      novel: novel
+      catalogPage: catalogPage
+    attributes:
+      directory: /mnt/files/comic/cartoon18/
+    crawlerSettings:
+      catalog:
+        skipIfPresent: false
+        skipSaveIfPresent: true
+      catalogPage:
+        skipIfPresent: false
+        skipSaveIfPresent: true
+      novel:
+        skipIfPresent: false
+        skipSaveIfPresent: true
+      chapter:
+        enabled: true
+        skipIfPresent: false
+        skipSaveIfPresent: true
+
+
+  - name: kxkm
+    regexSettings:
+      #拼装每一页url
+      parsePageRegex: page=([^\&]+)
+      pagePrefix: "page="
+    mongoCollections:
+      novel: novel
+      catalogPage: catalogPage
+    attributes:
+      directory: /mnt/files/comic/cartoon18/
+    crawlerSettings:
+      catalog:
+        skipIfPresent: false
+        skipSaveIfPresent: true
+      catalogPage:
+        skipIfPresent: false
+        skipSaveIfPresent: true
+      novel:
+        skipIfPresent: false
+        skipSaveIfPresent: true
+      chapter:
+        enabled: true
+        skipIfPresent: false
+        skipSaveIfPresent: true

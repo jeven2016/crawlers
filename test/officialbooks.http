@@ -1,0 +1,43 @@
+### create a site
+POST http://localhost:8080/sites
+content-type: application/json
+
+{
+  "name": "nsf",
+  "displayName": "nsf图书馆",
+  "crawlerType": 3,
+  "attributes": {
+    "siteUrl": "https://www.nosadfun.com"
+  }
+}
+
+
+### Create a catalog
+POST http://localhost:8080/catalogs
+content-type: application/json
+
+{
+  "siteId": "64f30873eddbeeaa4bb06c00",
+  "name": "辣文",
+  "url": "https://www.nosadfun.com/category/2/"
+}
+
+
+### submit a task running for catalog page
+POST http://localhost:8080/tasks/catalog-pages
+Content-Type: application/json
+
+{
+  "catalogId": "64f308e4eddbeeaa4bb06c01",
+  "url": "https://onejav.com/actress/Fuua%20Kaede?page=89"
+}
+
+
+### submit a novel task
+POST http://localhost:8080/tasks/novels
+Content-Type: application/json
+
+{
+  "catalogId": "64f308e4eddbeeaa4bb06c01",
+  "url": "https://www.nosadfun.com/book/67572/"
+}

@@ -1,0 +1,5 @@
+FROM alpine
+ADD bin/crawlers /usr/local/bin/
+RUN chmod a+x /usr/local/bin/crawlers
+ENV TZ Asia/Shanghai
+ENTRYPOINT ["crawlers"]

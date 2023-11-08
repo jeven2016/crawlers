@@ -1,0 +1,212 @@
+basePath: /api/v1/
+definitions:
+  common.TaskStatus:
+    enum:
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    type: integer
+    x-enum-varnames:
+    - TaskStatusNotStared
+    - TaskStatusProcessing
+    - TaskStatusFinished
+    - TaskStatusFailed
+    - TaskStatusRetryFailed
+  entity.Catalog:
+    properties:
+      attributes:
+        additionalProperties: true
+        type: object
+      crawlerType:
+        description: 资源抓取类型
+        type: integer
+      createdTime:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      siteId:
+        type: string
+      updatedTime:
+        type: string
+    required:
+    - name
+    - siteId
+    type: object
+  entity.Site:
+    properties:
+      attributes:
+        additionalProperties: true
+        type: object
+      crawlerType:
+        description: 资源抓取类型
+        type: integer
+      createdTime:
+        type: string
+      description:
+        type: string
+      displayName:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      updatedTime:
+        type: string
+    required:
+    - crawlerType
+    - displayName
+    - name
+    type: object
+  model.CatalogPageTask:
+    properties:
+      attributes:
+        additionalProperties: true
+        type: object
+      catalogId:
+        type: string
+      createdDate:
+        type: string
+      id:
+        description: 添加omitempty，当为空时，mongo driver会自动生成
+        type: string
+      lastUpdated:
+        type: string
+      retries:
+        type: integer
+      siteName:
+        type: string
+      status:
+        $ref: '#/definitions/common.TaskStatus'
+      url:
+        type: string
+    required:
+    - catalogId
+    - url
+    type: object
+  model.NovelTask:
+    properties:
+      attributes:
+        additionalProperties: true
+        type: object
+      catalogId:
+        type: string
+      createdDate:
+        type: string
+      hasChapters:
+        type: boolean
+      id:
+        type: string
+      lastUpdated:
+        type: string
+      name:
+        type: string
+      retries:
+        type: integer
+      siteName:
+        type: string
+      status:
+        $ref: '#/definitions/common.TaskStatus'
+      url:
+        type: string
+    required:
+    - catalogId
+    - url
+    type: object
+info:
+  contact: {}
+  description: crawler接口参考文档
+  termsOfService: only for internal use
+  title: crawler文档
+  version: "0.2"
+paths:
+  /sites:
+    post:
+      consumes:
+      - application/json
+      description: 创建新的创建网站目录，管理Novel、章节等数据
+      parameters:
+      - description: 网站ID
+        in: body
+        name: siteId
+        required: true
+        schema:
+          $ref: '#/definitions/entity.Catalog'
+      - description: 目录名称
+        in: body
+        name: name
+        required: true
+        schema:
+          $ref: '#/definitions/entity.Catalog'
+      - description: 目录URL
+        in: body
+        name: url
+        required: true
+        schema:
+          $ref: '#/definitions/entity.Catalog'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+      summary: 创建网站下的目录
+      tags:
+      - 测试
+  /tasks/catalog-pages:
+    post:
+      consumes:
+      - application/json
+      description: 处理目录页面请求,解析出Novel的地址并发送到消息对列中去
+      parameters:
+      - description: 目录ID
+        in: body
+        name: catalogId
+        required: true
+        schema:
+          $ref: '#/definitions/model.CatalogPageTask'
+      - description: URL， 格式：http://prefix?page=1, http://prefix?page=1-3
+        in: body
+        name: url
+        required: true
+        schema:
+          $ref: '#/definitions/model.CatalogPageTask'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: 处理目录页面请求
+      tags:
+      - 测试
+  /tasks/novels:
+    post:
+      consumes:
+      - application/json
+      description: 处理Novel页面请求,解析出章节的地址并发送到消息对列中去
+      parameters:
+      - description: Novel ID
+        in: body
+        name: catalogId
+        required: true
+        schema:
+          $ref: '#/definitions/model.NovelTask'
+      - description: Novel URL， 格式：http://prefix/xx
+        in: body
+        name: url
+        required: true
+        schema:
+          $ref: '#/definitions/model.NovelTask'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: 处理Novel页面请求
+      tags:
+      - 测试
+swagger: "2.0"

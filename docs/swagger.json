@@ -1,0 +1,313 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "crawler接口参考文档",
+        "title": "crawler文档",
+        "termsOfService": "only for internal use",
+        "contact": {},
+        "version": "0.2"
+    },
+    "basePath": "/api/v1/",
+    "paths": {
+        "/sites": {
+            "post": {
+                "description": "创建新的创建网站目录，管理Novel、章节等数据",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "测试"
+                ],
+                "summary": "创建网站下的目录",
+                "parameters": [
+                    {
+                        "description": "网站ID",
+                        "name": "siteId",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/entity.Catalog"
+                        }
+                    },
+                    {
+                        "description": "目录名称",
+                        "name": "name",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/entity.Catalog"
+                        }
+                    },
+                    {
+                        "description": "目录URL",
+                        "name": "url",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/entity.Catalog"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                }
+            }
+        },
+        "/tasks/catalog-pages": {
+            "post": {
+                "description": "处理目录页面请求,解析出Novel的地址并发送到消息对列中去",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "测试"
+                ],
+                "summary": "处理目录页面请求",
+                "parameters": [
+                    {
+                        "description": "目录ID",
+                        "name": "catalogId",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.CatalogPageTask"
+                        }
+                    },
+                    {
+                        "description": "URL， 格式：http://prefix?page=1, http://prefix?page=1-3",
+                        "name": "url",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.CatalogPageTask"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/tasks/novels": {
+            "post": {
+                "description": "处理Novel页面请求,解析出章节的地址并发送到消息对列中去",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "测试"
+                ],
+                "summary": "处理Novel页面请求",
+                "parameters": [
+                    {
+                        "description": "Novel ID",
+                        "name": "catalogId",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.NovelTask"
+                        }
+                    },
+                    {
+                        "description": "Novel URL， 格式：http://prefix/xx",
+                        "name": "url",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.NovelTask"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "common.TaskStatus": {
+            "type": "integer",
+            "enum": [
+                1,
+                2,
+                3,
+                4,
+                5
+            ],
+            "x-enum-varnames": [
+                "TaskStatusNotStared",
+                "TaskStatusProcessing",
+                "TaskStatusFinished",
+                "TaskStatusFailed",
+                "TaskStatusRetryFailed"
+            ]
+        },
+        "entity.Catalog": {
+            "type": "object",
+            "required": [
+                "name",
+                "siteId"
+            ],
+            "properties": {
+                "attributes": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "crawlerType": {
+                    "description": "资源抓取类型",
+                    "type": "integer"
+                },
+                "createdTime": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "siteId": {
+                    "type": "string"
+                },
+                "updatedTime": {
+                    "type": "string"
+                }
+            }
+        },
+        "entity.Site": {
+            "type": "object",
+            "required": [
+                "crawlerType",
+                "displayName",
+                "name"
+            ],
+            "properties": {
+                "attributes": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "crawlerType": {
+                    "description": "资源抓取类型",
+                    "type": "integer"
+                },
+                "createdTime": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "displayName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updatedTime": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.CatalogPageTask": {
+            "type": "object",
+            "required": [
+                "catalogId",
+                "url"
+            ],
+            "properties": {
+                "attributes": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "catalogId": {
+                    "type": "string"
+                },
+                "createdDate": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "添加omitempty，当为空时，mongo driver会自动生成",
+                    "type": "string"
+                },
+                "lastUpdated": {
+                    "type": "string"
+                },
+                "retries": {
+                    "type": "integer"
+                },
+                "siteName": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/common.TaskStatus"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.NovelTask": {
+            "type": "object",
+            "required": [
+                "catalogId",
+                "url"
+            ],
+            "properties": {
+                "attributes": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "catalogId": {
+                    "type": "string"
+                },
+                "createdDate": {
+                    "type": "string"
+                },
+                "hasChapters": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "lastUpdated": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "retries": {
+                    "type": "integer"
+                },
+                "siteName": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/common.TaskStatus"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

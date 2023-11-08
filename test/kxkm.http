@@ -1,0 +1,52 @@
+### create a site
+POST http://localhost:8080/sites
+content-type: application/json
+
+{
+  "name": "kxkm",
+  "displayName": "kxkm 图片资源",
+  "crawlerType": 2
+}
+
+
+### Create a catalog
+POST http://localhost:8080/catalogs
+content-type: application/json
+
+{
+  "siteId": "653cb2ce5fdb9eda1cee7bd4",
+  "name": "韩漫k",
+  "url": "https://kxkmh.top/manga/library?type=2&orderby=1&page=1"
+}
+
+
+### submit a task running for catalog page
+POST http://localhost:8080/tasks/catalog-pages
+Content-Type: application/json
+
+{
+  "catalogId": "653fa03ae48f1f83aed5bab8",
+  "url": "https://kxkmh.top/manga/library?type=2&complete=1&orderby=1&page=12"
+}
+
+### submit a task running for catalog page but only for downloading the cover image of novels
+POST http://localhost:8080/tasks/catalog-pages
+Content-Type: application/json
+
+{
+  "catalogId": "653fa03ae48f1f83aed5bab8",
+  "url": "https://kxkmh.top/manga/library?type=2&complete=1&orderby=1&page=1-5",
+  "attributes": {
+    "onlyCoverImage": true
+  }
+}
+
+
+### submit a novel task
+POST http://localhost:8080/tasks/novels
+Content-Type: application/json
+
+{
+  "catalogId": "653fa03ae48f1f83aed5bab8",
+  "url": "https://kxkmh.top/manga/300"
+}

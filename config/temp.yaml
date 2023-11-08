@@ -1,0 +1,20 @@
+
+http:
+  port: 8080
+
+
+crawlerSettings:
+  catalogPageTaskParallelism: 1
+  novelTaskParallelism: 2
+  chapterTaskParallelism: 5
+  excludedNovelUrls:
+    - https://kxkmh.top/manga/1203
+    - https://kxkmh.top/manga/1844
+    - https://kxkmh.top/manga/1197
+    - https://kxkmh.top/manga/1918
+    - https://kxkmh.top/manga/1835/detail/61673
+    - https://kxkmh.top/manga/1143
+    - https://kxkmh.top/manga/1043
+    - https://kxkmh.top/manga/1775
+    - https://kxkmh.top/manga/1058
+#    - https://github.com/

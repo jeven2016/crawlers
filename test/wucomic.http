@@ -1,0 +1,40 @@
+### create a site
+POST http://localhost:8080/sites
+content-type: application/json
+
+{
+  "name": "wucomic",
+  "displayName": "wucomic 图片资源",
+  "crawlerType": 2
+}
+
+
+### Create a catalog
+POST http://localhost:8080/catalogs
+content-type: application/json
+
+{
+  "siteId": "653cd8175fdb9eda1cee7d61",
+  "name": "韩漫wu",
+  "url": "https://kxkmh.top/manga/library?type=2&orderby=1&page=1"
+}
+
+
+### submit a task running for catalog page
+POST http://localhost:8080/tasks/catalog-pages
+Content-Type: application/json
+
+{
+  "catalogId": "653cd8345fdb9eda1cee7d63",
+  "url": "https://kxkmh.top/manga/library?type=2&orderby=1&page=1"
+}
+
+
+### submit a novel task
+POST http://localhost:8080/tasks/novels
+Content-Type: application/json
+
+{
+  "catalogId": "653cd8345fdb9eda1cee7d63",
+  "url": ""
+}
