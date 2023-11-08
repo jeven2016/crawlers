@@ -4,6 +4,7 @@ import (
 	"context"
 	"crawlers/pkg/base"
 	"errors"
+	"github.com/jeven2016/mylibs/system"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -17,7 +18,7 @@ func FindById[T any](ctx context.Context, id primitive.ObjectID, collection stri
 
 func FindByMongoFilter[T any](ctx context.Context, mongoFilter interface{}, collection string,
 	decodedObj *T, opts ...*options.FindOneOptions) (*T, error) {
-	col := base.GetSystem().GetCollection(collection)
+	col := system.GetSystem().GetCollection(collection)
 	if col == nil {
 		return nil, errors.New("collection not found: " + collection)
 	}

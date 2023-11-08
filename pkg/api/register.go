@@ -17,17 +17,15 @@ func RegisterEndpoints() *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	var engine = gin.Default()
 
-	logger := zap.L()
-
 	// Add a ginzap middleware, which:
 	//   - Logs all requests, like a combined access and error log.
 	//   - Logs to stdout.
 	//   - RFC3339 with local time format.
-	engine.Use(ginzap.Ginzap(logger, time.RFC3339, false))
+	engine.Use(ginzap.Ginzap(zap.L(), time.RFC3339, false))
 
 	// Logs all panic to error log
 	//   - stack means whether output the stack info.
-	engine.Use(ginzap.RecoveryWithZap(logger, false))
+	engine.Use(ginzap.RecoveryWithZap(zap.L(), false))
 
 	hd := NewTaskHandler()
 	siteHandler := NewSiteHandler()

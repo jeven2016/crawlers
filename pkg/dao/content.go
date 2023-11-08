@@ -5,6 +5,7 @@ import (
 	"crawlers/pkg/base"
 	"crawlers/pkg/model/entity"
 	"errors"
+	"github.com/jeven2016/mylibs/system"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -21,7 +22,7 @@ type contentInterface interface {
 type contentDaoImpl struct{}
 
 func (c *contentDaoImpl) Insert(ctx context.Context, content *entity.Content) (*primitive.ObjectID, error) {
-	collection := base.GetSystem().GetCollection(base.CollectionContent)
+	collection := system.GetSystem().GetCollection(base.CollectionContent)
 	//for creating
 	if !content.Id.IsZero() {
 		return nil, base.ErrDocumentIdExists
@@ -55,7 +56,7 @@ func (c *contentDaoImpl) Save(ctx context.Context, content *entity.Content) (*pr
 		//insert
 		return c.Insert(ctx, content)
 	} else {
-		collection := base.GetSystem().GetCollection(base.CollectionContent)
+		collection := system.GetSystem().GetCollection(base.CollectionContent)
 		if collection == nil {
 			zap.L().Error("collection not found: " + base.CollectionContent)
 			return nil, errors.New("collection not found: " + base.CollectionContent)

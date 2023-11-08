@@ -3,6 +3,11 @@ version: '3'
 #  includes:
 
 env:
+  DOCKER_ADDR: 192.168.1.21:8082
+  DOCKER_REPO: docker-local
+  REPO_USER: admin
+  REPO_PASSWORD: Wzjzzl2015
+
   CRAWLER_IMAGE: '{{ .DOCKER_ADDR }}/{{ .DOCKER_REPO }}/crawler:{{ .RELEASE_VERSION }}'
 
 tasks:

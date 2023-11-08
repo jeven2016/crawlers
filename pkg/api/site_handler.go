@@ -19,7 +19,7 @@ type SiteHandler struct {
 
 func NewSiteHandler() *SiteHandler {
 	return &SiteHandler{
-		sys: base.GetSystem(),
+		sys: system.GetSystem(),
 	}
 }
 
@@ -103,7 +103,7 @@ func (h *SiteHandler) CreateCatalog(c *gin.Context) {
 }
 
 func (h *SiteHandler) doCreate(c *gin.Context, req *dto.CreateRequest) {
-	col := base.GetSystem().GetCollection(req.Collection)
+	col := system.GetSystem().GetCollection(req.Collection)
 
 	exists, err := utils.Exists(c, req.RedisCacheKey, func() (any, error) {
 		return dao.CatalogDao.ExistsByName(c, req.Name)

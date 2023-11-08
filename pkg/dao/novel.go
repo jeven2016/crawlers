@@ -5,6 +5,7 @@ import (
 	"crawlers/pkg/base"
 	"crawlers/pkg/model/entity"
 	"errors"
+	"github.com/jeven2016/mylibs/system"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -47,7 +48,7 @@ func (n *novelDaoImpl) ExistsByName(ctx context.Context, name string) (bool, err
 }
 
 func (n *novelDaoImpl) Insert(ctx context.Context, novel *entity.Novel) (*primitive.ObjectID, error) {
-	collection := base.GetSystem().GetCollection(base.CollectionNovel)
+	collection := system.GetSystem().GetCollection(base.CollectionNovel)
 	//for creating
 	if !novel.Id.IsZero() {
 		return nil, base.ErrDocumentIdExists
@@ -74,7 +75,7 @@ func (c *novelDaoImpl) Save(ctx context.Context, novel *entity.Novel) (*primitiv
 		//insert
 		return c.Insert(ctx, novel)
 	} else {
-		collection := base.GetSystem().GetCollection(base.CollectionNovel)
+		collection := system.GetSystem().GetCollection(base.CollectionNovel)
 		if collection == nil {
 			zap.L().Error("collection not found: " + base.CollectionNovel)
 			return nil, errors.New("collection not found: " + base.CollectionNovel)

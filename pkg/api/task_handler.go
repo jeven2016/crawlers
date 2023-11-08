@@ -21,7 +21,7 @@ type TaskHandler struct {
 
 func NewTaskHandler() *TaskHandler {
 	return &TaskHandler{
-		sys: base.GetSystem(),
+		sys: system.GetSystem(),
 	}
 }
 
@@ -74,7 +74,7 @@ func (h *TaskHandler) HandleCatalogPage(c *gin.Context) {
 				Attributes: pageReq.Attributes,
 				Status:     base.TaskStatusNotStared,
 			}
-			if err = base.GetSystem().RedisClient.PublishMessage(c, pageMsg, stream.CatalogPageUrlStream); err != nil {
+			if err = system.GetSystem().RedisClient.PublishMessage(c, pageMsg, stream.CatalogPageUrlStream); err != nil {
 				c.AbortWithStatusJSON(http.StatusInternalServerError,
 					base.FailsWithParams(base.ErrPublishMessage, err.Error()))
 				zap.L().Warn("failed to publish a message",
@@ -144,7 +144,7 @@ func (h *TaskHandler) HandleNovelPage(c *gin.Context) {
 	novelTask.Status = base.TaskStatusNotStared
 	novelTask.SiteName = site.Name
 
-	if err := base.GetSystem().RedisClient.PublishMessage(c, novelTask, stream.NovelUrlStream); err != nil {
+	if err := system.GetSystem().RedisClient.PublishMessage(c, novelTask, stream.NovelUrlStream); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError,
 			base.FailsWithParams(base.ErrPublishMessage, err.Error()))
 		zap.L().Warn("failed to publish a message",

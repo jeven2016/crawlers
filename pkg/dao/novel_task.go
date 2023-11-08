@@ -5,6 +5,7 @@ import (
 	"crawlers/pkg/base"
 	"crawlers/pkg/model"
 	"errors"
+	"github.com/jeven2016/mylibs/system"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -25,7 +26,7 @@ func (c *novelTaskDaoImpl) FindByUrl(ctx context.Context, url string) (*model.No
 }
 
 func (c *novelTaskDaoImpl) Save(ctx context.Context, task *model.NovelTask) (*primitive.ObjectID, error) {
-	collection := base.GetSystem().GetCollection(base.CollectionNovelTask)
+	collection := system.GetSystem().GetCollection(base.CollectionNovelTask)
 	if collection == nil {
 		zap.L().Error("collection not found: " + base.CollectionNovelTask)
 		return nil, errors.New("collection not found: " + base.CollectionNovelTask)

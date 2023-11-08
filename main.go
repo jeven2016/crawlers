@@ -13,7 +13,6 @@ import (
 	"github.com/jeven2016/mylibs/system"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
-	"log"
 	"net/http"
 )
 
@@ -48,28 +47,25 @@ func run() {
 				base.PrintCmdErr(err)
 				return
 			}
+
+			// globally set config
 			base.SetConfig(cfg)
+			server = createServer(cfg, server)
 
 			//global context
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			sys := systemInit(cfg, cancelFunc, server, ctx)
 			if sys != nil {
-				base.SetSystem(sys)
+				//ensure the indexes are initialized
+				dao.EnsureMongoIndexes(ctx)
+
 				website.RegisterProcessors()
-				dao.InitDao(ctx)
-
-				if err := website.RegisterStream(ctx); err != nil {
-					zap.L().Error("failed to register streams", zap.Error(err))
-					return
-				}
-
-				engine := api.RegisterEndpoints()
+				//if err := website.RegisterStream(ctx); err != nil {
+				//	zap.L().Error("failed to register streams", zap.Error(err))
+				//	return
+				//}
 
 				// run as a web server
-				bindAddr := fmt.Sprintf("%v:%v", cfg.Http.Address, cfg.Http.Port)
-				zap.L().Sugar().Info("server listens on ", bindAddr)
-				server = &http.Server{Addr: bindAddr, Handler: engine}
-
 				if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 					zap.L().Error("unable to start web server", zap.Error(err))
 				}
@@ -77,16 +73,24 @@ func run() {
 		},
 	}
 
-	// 配置文件的绝对路径
+	// the absolute path of yaml config file
 	extraConfigFile = rootCmd.Flags().StringP(flagName, "c", "", "the absolute path of yaml config file")
 
 	if err := rootCmd.Execute(); err != nil {
-		log.Fatal(err)
+		base.PrintCmdErr(err)
 	}
 }
 
+func createServer(cfg *base.ServerConfig, server *http.Server) *http.Server {
+	engine := api.RegisterEndpoints()
+	bindAddr := fmt.Sprintf("%v:%v", cfg.Http.Address, cfg.Http.Port)
+	zap.L().Sugar().Info("server listens on ", bindAddr)
+	server = &http.Server{Addr: bindAddr, Handler: engine}
+	return server
+}
+
 func systemInit(cfg *base.ServerConfig, cancelFunc context.CancelFunc, server *http.Server, ctx context.Context) *system.System {
-	return system.Startup(&system.StartupParams{
+	return system.Startup(ctx, &system.StartupParams{
 		EnableEtcd:    false,
 		EnableMongodb: true,
 		EnableRedis:   true,
@@ -97,12 +101,12 @@ func systemInit(cfg *base.ServerConfig, cancelFunc context.CancelFunc, server *h
 		},
 		PostShutdown: func() error {
 			if server != nil {
+				zap.S().Info("web server shuts down")
 				if err := server.Shutdown(ctx); err != nil {
 					zap.L().Error("unable to shut web server down", zap.Error(err))
 					return err
 				}
 			}
-			zap.S().Info("web server shuts down")
 			return nil
 		},
 	})

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crawlers/pkg/base"
 	"errors"
+	"github.com/jeven2016/mylibs/system"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -44,7 +45,7 @@ func EnsureMongoIndexes(ctx context.Context) {
 }
 
 func ensureIndex(ctx context.Context, collection string, keys primitive.M, options *options.IndexOptions) {
-	col := base.GetSystem().GetCollection(collection)
+	col := system.GetSystem().GetCollection(collection)
 	_, err := col.Indexes().CreateOne(ctx, mongo.IndexModel{
 		Keys:    keys,
 		Options: options,

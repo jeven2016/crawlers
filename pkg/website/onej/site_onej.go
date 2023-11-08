@@ -10,6 +10,7 @@ import (
 	"github.com/jeven2016/mylibs/cache"
 	"github.com/jeven2016/mylibs/client"
 	"github.com/jeven2016/mylibs/db"
+	"github.com/jeven2016/mylibs/system"
 	"github.com/jeven2016/mylibs/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.uber.org/zap"
@@ -26,7 +27,7 @@ type SiteOnej struct {
 }
 
 func NewSiteOnej() *SiteOnej {
-	sys := base.GetSystem()
+	sys := system.GetSystem()
 	cfg := base.GetSiteConfig(base.SiteOneJ)
 	if cfg == nil {
 		zap.L().Sugar().Warn("Could not find site config", zap.String("siteName", base.SiteNsf))
@@ -119,7 +120,7 @@ func (s *SiteOnej) CrawlNovelPage(ctx context.Context, novelPageMsg *model.Novel
 	if picDir, ok := s.siteCfg.Attributes[directory]; ok {
 		//获取catalog name
 		catalogName, err := utils.GetAndSet(ctx, novelPageMsg.CatalogId.String(), func() (*string, error) {
-			catlogCol := base.GetSystem().GetCollection(base.CollectionCatalog)
+			catlogCol := system.GetSystem().GetCollection(base.CollectionCatalog)
 			var catalogMsg model.CatalogTask
 			if err := catlogCol.FindOne(ctx, bson.M{base.ColumId: novelPageMsg.CatalogId}).Decode(&catalogMsg); err != nil {
 				return nil, err

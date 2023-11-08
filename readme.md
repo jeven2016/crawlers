@@ -4,9 +4,15 @@
 go get github.com/gocolly/colly/v2 latest
 msgp 序列化
 ```
+//参考的框架
+https://blog.csdn.net/weixin_41853064/article/details/134284378
+
+https://github.com/go-co-op/gocron?utm_campaign=awesomego&utm_medium=referral&utm_source=awesomego
 https://github.com/prometheus/client_golang/blob/main/prometheus/examples_test.go
 https://github.com/lao-siji/lao-siji
 
+//date
+https://github.com/golang-module/carbon
 ``
 CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build main.go
 ``

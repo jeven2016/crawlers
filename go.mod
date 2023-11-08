@@ -1,6 +1,6 @@
 module crawlers
 
-go 1.19
+go 1.21
 
 require (
 	github.com/chromedp/chromedp v0.9.3
@@ -11,7 +11,7 @@ require (
 	github.com/go-creed/sat v1.0.3
 	github.com/go-resty/resty/v2 v2.10.0
 	github.com/gocolly/colly/v2 v2.1.0
-	github.com/jeven2016/mylibs v0.1.2
+	github.com/jeven2016/mylibs v0.1.3
 	github.com/prometheus/client_golang v1.17.0
 	github.com/redis/go-redis/v9 v9.3.0
 	github.com/reugn/go-streams v0.9.0

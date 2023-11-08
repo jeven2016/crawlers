@@ -5,6 +5,7 @@ import (
 	"crawlers/pkg/base"
 	"crawlers/pkg/model/entity"
 	"errors"
+	"github.com/jeven2016/mylibs/system"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -38,7 +39,7 @@ func (n *chapterDaoImpl) ExistsByName(ctx context.Context, name string) (bool, e
 }
 
 func (n *chapterDaoImpl) Insert(ctx context.Context, novel *entity.Chapter) (*primitive.ObjectID, error) {
-	collection := base.GetSystem().GetCollection(base.CollectionChapter)
+	collection := system.GetSystem().GetCollection(base.CollectionChapter)
 	//for creating
 	if !novel.Id.IsZero() {
 		return nil, base.ErrDocumentIdExists
@@ -65,7 +66,7 @@ func (n *chapterDaoImpl) Save(ctx context.Context, chapter *entity.Chapter) (*pr
 		//insert
 		return n.Insert(ctx, chapter)
 	} else {
-		collection := base.GetSystem().GetCollection(base.CollectionChapter)
+		collection := system.GetSystem().GetCollection(base.CollectionChapter)
 		if collection == nil {
 			zap.L().Error("collection not found: " + base.CollectionChapter)
 			return nil, errors.New("collection not found: " + base.CollectionChapter)
@@ -88,7 +89,7 @@ func (n *chapterDaoImpl) Save(ctx context.Context, chapter *entity.Chapter) (*pr
 }
 
 func (n *chapterDaoImpl) BulkInsert(ctx context.Context, chapters []*entity.Chapter, novelId *primitive.ObjectID) error {
-	collection := base.GetSystem().GetCollection(base.CollectionChapter)
+	collection := system.GetSystem().GetCollection(base.CollectionChapter)
 
 	documents := make([]interface{}, len(chapters))
 

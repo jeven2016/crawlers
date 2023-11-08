@@ -13,6 +13,7 @@ import (
 	"github.com/jeven2016/mylibs/cache"
 	"github.com/jeven2016/mylibs/client"
 	"github.com/jeven2016/mylibs/db"
+	"github.com/jeven2016/mylibs/system"
 	"github.com/jeven2016/mylibs/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
@@ -30,7 +31,7 @@ type NsfCrawler struct {
 }
 
 func NewNsfCrawler() *NsfCrawler {
-	sys := base.GetSystem()
+	sys := system.GetSystem()
 	cfg := base.GetSiteConfig(base.SiteNsf)
 	if cfg == nil {
 		zap.L().Sugar().Warn("Could not find site config", zap.String("siteName", base.SiteNsf))
