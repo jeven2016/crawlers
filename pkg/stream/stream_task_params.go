@@ -6,15 +6,6 @@ import (
 	"strings"
 )
 
-type StreamTaskParams struct {
-	CatalogPageStreamName     string
-	CatalogPageStreamConsumer string
-	NovelPageStreamName       string
-	NovelPageStreamConsumer   string
-	ChapterPageStreamName     string
-	ChapterPageStreamConsumer string
-}
-
 func DefaultStreamTaskParams() *StreamTaskParams {
 	return &StreamTaskParams{
 		CatalogPageStreamName:     CatalogPageUrlStream,

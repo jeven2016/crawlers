@@ -32,7 +32,7 @@ func RegisterEndpoints() *gin.Engine {
 
 	//gin-swagger 同时还提供了 DisablingWrapHandler 函数，方便我们通过设置某些环境变量来禁用Swagger。
 	//此时如果将环境变量 NAME_OF_ENV_VARIABLE设置为任意值，则 /swagger/*any 将返回404响应，就像未指定路由时一样
-	//engine.GET("/swagger/*any", ginSwagger.DisablingWrapHandler(swaggerFiles.TaskHandler, "NAME_OF_ENV_VARIABLE"))
+	//engine.GET("/swagger/*any", ginSwagger.DisablingWrapHandler(swaggerFiles.taskHandler, "NAME_OF_ENV_VARIABLE"))
 	engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	engine.GET("/health", func(c *gin.Context) { c.Status(http.StatusOK) })
 	engine.GET("/metrics", gin.WrapH(promhttp.Handler()))

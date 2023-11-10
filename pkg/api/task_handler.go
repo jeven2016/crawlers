@@ -13,19 +13,17 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
 	"net/http"
+	"strconv"
 )
 
-type TaskHandler struct {
-	sys *system.System
-}
+// TaskHandler task handler for submitting tasks to message stream
+type TaskHandler struct{}
 
 func NewTaskHandler() *TaskHandler {
-	return &TaskHandler{
-		sys: system.GetSystem(),
-	}
+	return &TaskHandler{}
 }
 
-// HandleCatalogPage handle for catalog page request and parse the novel links for further processing
+// HandleCatalogPage handler for catalog page request and to parse the novel links for further processing
 // @Tags 测试
 // @Summary  处理目录页面请求
 // @Description 处理目录页面请求,解析出Novel的地址并发送到消息对列中去
@@ -36,58 +34,65 @@ func NewTaskHandler() *TaskHandler {
 // @Success 200
 // @Router /tasks/catalog-pages [post]
 func (h *TaskHandler) HandleCatalogPage(c *gin.Context) {
-	var pageReq model.CatalogPageTask
-	err := c.ShouldBindJSON(&pageReq)
-	if err != nil {
-		zap.L().Warn("failed to convert json", zap.Error(err))
-		c.AbortWithStatusJSON(http.StatusBadRequest,
-			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
+	var pageTask model.CatalogPageTask
+	if !bindJson(c, &pageTask) {
 		return
 	}
 
+	var sp website.TaskProcessor
 	var site *entity.Site
 	var hasError bool
-	if site, hasError = h.getTaskEntity(c, pageReq.CatalogId); hasError {
+	var urls []string
+	var err error
+
+	if site, hasError = h.getTaskEntity(c, pageTask.CatalogId); hasError {
 		return
 	}
 
 	//if multiple pages need to handle
-	if sp := website.GetSiteTaskProcessor(site.Name); sp == nil {
+	if sp = website.GetSiteTaskProcessor(site.Name); sp == nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, base.Fails(base.ErrCodeUnSupportedCatalog))
 		zap.L().Warn("no processor found for this siteKey", zap.String("siteKey", site.Name))
 		return
-	} else {
-		//parse all page urls if page parameter is specified in such format: page=1-5
-		urls, err := sp.ParsePageUrls(site.Name, pageReq.Url)
-		if err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, base.FailsWithParams(base.ErrParsePageUrl, err.Error()))
-			zap.L().Warn("failed to process pageUrl",
-				zap.String("pageUrl", pageReq.Url), zap.Error(err))
-			return
-		}
-
-		for _, url := range urls {
-			pageMsg := &model.CatalogPageTask{
-				SiteName:   site.Name,
-				CatalogId:  pageReq.CatalogId,
-				Url:        url,
-				Attributes: pageReq.Attributes,
-				Status:     base.TaskStatusNotStared,
-			}
-			if err = system.GetSystem().RedisClient.PublishMessage(c, pageMsg, stream.CatalogPageUrlStream); err != nil {
-				c.AbortWithStatusJSON(http.StatusInternalServerError,
-					base.FailsWithParams(base.ErrPublishMessage, err.Error()))
-				zap.L().Warn("failed to publish a message",
-					zap.String("pageUrl", pageReq.Url), zap.Error(err))
-				return
-			}
-		}
-
+	}
+	//parse all page urls if page parameter is specified in such format: page=1-5
+	urls, err = sp.ParsePageUrls(site.Name, pageTask.Url)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, base.FailsWithParams(base.ErrParsePageUrl, err.Error()))
+		zap.L().Warn("failed to process pageUrl", zap.String("pageUrl", pageTask.Url), zap.Error(err))
+		return
 	}
 
+	// publish corresponding messages for these urls
+	for _, url := range urls {
+		if url == "" {
+			zap.L().Warn("invalid page url", zap.String("pageUrl", url))
+			continue
+		}
+
+		//construct  a catalog page message
+		pageMsg := &model.CatalogPageTask{
+			SiteName:   site.Name,
+			CatalogId:  pageTask.CatalogId,
+			Url:        url,
+			Attributes: pageTask.Attributes,
+			Status:     base.TaskStatusNotStared,
+		}
+
+		//publish it
+		if err = system.GetSystem().RedisClient.PublishMessage(c, pageMsg, stream.CatalogPageUrlStream); err != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError,
+				base.FailsWithParams(base.ErrPublishMessage, err.Error()))
+			zap.L().Warn("failed to publish a message",
+				zap.String("pageUrl", pageTask.Url), zap.Error(err))
+			return
+		}
+	}
+	zap.S().Info("published", strconv.Itoa(len(urls)), "task messages for catalog page:", pageTask.Url)
 	c.JSON(http.StatusAccepted, base.SuccessCode(base.ErrCodeTaskSubmitted))
 }
 
+// check if both site and catalog exist
 func (h *TaskHandler) getTaskEntity(c *gin.Context, catalogId primitive.ObjectID) (site *entity.Site, hasError bool) {
 	var err error
 	var catalog *entity.Catalog
@@ -103,7 +108,6 @@ func (h *TaskHandler) getTaskEntity(c *gin.Context, catalogId primitive.ObjectID
 		zap.L().Warn("site does not exist", zap.String("siteId", siteStringId), zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusBadRequest, base.FailsWithParams(base.ErrSiteNotFound, siteStringId))
 		hasError = true
-		return
 	}
 	return
 }
@@ -120,21 +124,17 @@ func (h *TaskHandler) getTaskEntity(c *gin.Context, catalogId primitive.ObjectID
 // @Router /tasks/novels [post]
 func (h *TaskHandler) HandleNovelPage(c *gin.Context) {
 	var novelTask model.NovelTask
-	err := c.ShouldBindJSON(&novelTask)
-	if err != nil {
-		zap.L().Warn("failed to convert json", zap.Error(err))
-		c.AbortWithStatusJSON(http.StatusBadRequest,
-			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
+	if !bindJson(c, &novelTask) {
 		return
 	}
 
 	var site *entity.Site
 	var hasError bool
 
+	//check if the url is excluded
 	if slice.Contain(base.GetConfig().CrawlerSettings.ExcludedNovelUrls, novelTask.Url) {
 		zap.L().Warn("excluded novel url", zap.String("url", novelTask.Url))
-		c.AbortWithStatusJSON(http.StatusBadRequest,
-			base.FailsWithMessage(base.ErrExcludedNovel, err.Error()))
+		c.AbortWithStatusJSON(http.StatusBadRequest, base.Fails(base.ErrExcludedNovel))
 		return
 	}
 
@@ -147,8 +147,7 @@ func (h *TaskHandler) HandleNovelPage(c *gin.Context) {
 	if err := system.GetSystem().RedisClient.PublishMessage(c, novelTask, stream.NovelUrlStream); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError,
 			base.FailsWithParams(base.ErrPublishMessage, err.Error()))
-		zap.L().Warn("failed to publish a message",
-			zap.String("pageUrl", novelTask.Url), zap.Error(err))
+		zap.L().Warn("failed to publish a message", zap.String("pageUrl", novelTask.Url), zap.Error(err))
 		return
 	}
 }

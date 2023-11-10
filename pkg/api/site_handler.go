@@ -13,14 +13,11 @@ import (
 	"time"
 )
 
-type SiteHandler struct {
-	sys *system.System
-}
+type SiteHandler struct{}
 
+// NewSiteHandler Site handler for CRUD related operations
 func NewSiteHandler() *SiteHandler {
-	return &SiteHandler{
-		sys: system.GetSystem(),
-	}
+	return &SiteHandler{}
 }
 
 // CreateSite create a site
@@ -36,15 +33,12 @@ func NewSiteHandler() *SiteHandler {
 // @Router /sites [post]
 func (h *SiteHandler) CreateSite(c *gin.Context) {
 	var site entity.Site
-	if err := c.ShouldBindJSON(&site); err != nil {
-		//自定义error， https://juejin.cn/post/7015517416608235534
-		zap.L().Warn("failed to convert json", zap.Error(err))
-		c.AbortWithStatusJSON(http.StatusBadRequest,
-			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
+	if !bindJson(c, &site) {
 		return
 	}
 	currentTime := time.Now()
 	site.CreatedTime = &currentTime
+	site.UpdatedTime = nil
 
 	h.doCreate(c, &dto.CreateRequest{
 		Key:           "site",
@@ -68,12 +62,12 @@ func (h *SiteHandler) CreateSite(c *gin.Context) {
 // @Router /sites [post]
 func (h *SiteHandler) CreateCatalog(c *gin.Context) {
 	var catalog entity.Catalog
-	if err := c.ShouldBindJSON(&catalog); err != nil {
-		zap.L().Warn("failed to convert json", zap.Error(err))
-		c.AbortWithStatusJSON(http.StatusBadRequest,
-			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
+	if !bindJson(c, &catalog) {
 		return
 	}
+	currentTime := time.Now()
+	catalog.CreatedTime = &currentTime
+	catalog.UpdatedTime = nil
 
 	//check if the site exists and cache the result
 	exists, err := utils.Exists(c, utils.GenKey(base.SiteKeyExistsPrefix, catalog.SiteId.Hex()), func() (any, error) {
@@ -102,6 +96,7 @@ func (h *SiteHandler) CreateCatalog(c *gin.Context) {
 	})
 }
 
+// perform creation
 func (h *SiteHandler) doCreate(c *gin.Context, req *dto.CreateRequest) {
 	col := system.GetSystem().GetCollection(req.Collection)
 

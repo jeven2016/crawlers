@@ -48,7 +48,7 @@ func run() {
 				return
 			}
 
-			// globally set config
+			// globally cache the config
 			base.SetConfig(cfg)
 			server = createServer(cfg, server)
 
@@ -56,12 +56,14 @@ func run() {
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			sys := systemInit(cfg, cancelFunc, server, ctx)
 			if sys != nil {
-				//ensure the indexes are initialized
+				//ensure the indexes are created
 				dao.EnsureMongoIndexes(ctx)
 
 				website.RegisterProcessors()
-				//if err := website.RegisterStream(ctx); err != nil {
+
+				//if err := stream.LaunchGlobalSiteStream(ctx); err != nil {
 				//	zap.L().Error("failed to register streams", zap.Error(err))
+				//	cancelFunc()
 				//	return
 				//}
 
@@ -81,6 +83,7 @@ func run() {
 	}
 }
 
+// create a http server
 func createServer(cfg *base.ServerConfig, server *http.Server) *http.Server {
 	engine := api.RegisterEndpoints()
 	bindAddr := fmt.Sprintf("%v:%v", cfg.Http.Address, cfg.Http.Port)
@@ -89,6 +92,7 @@ func createServer(cfg *base.ServerConfig, server *http.Server) *http.Server {
 	return server
 }
 
+// system initializing
 func systemInit(cfg *base.ServerConfig, cancelFunc context.CancelFunc, server *http.Server, ctx context.Context) *system.System {
 	return system.Startup(ctx, &system.StartupParams{
 		EnableEtcd:    false,

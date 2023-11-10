@@ -1,5 +1,5 @@
 ### create a site
-POST http://localhost:8080/sites
+POST http://localhost:9999/sites
 content-type: application/json
 
 {
@@ -26,7 +26,7 @@ Content-Type: application/json
 
 {
   "catalogId": "653fa03ae48f1f83aed5bab8",
-  "url": "https://kxkmh.top/manga/library?type=2&complete=1&orderby=1&page=15"
+  "url": "https://kxkmh.top/manga/library?type=2&complete=1&orderby=1&page=20"
 }
 
 ### submit a task running for catalog page but only for downloading the cover image of novels
@@ -37,7 +37,8 @@ Content-Type: application/json
   "catalogId": "653fa03ae48f1f83aed5bab8",
   "url": "https://kxkmh.top/manga/library?type=2&complete=1&orderby=1&page=1-5",
   "attributes": {
-    "onlyCoverImage": true
+    "onlyCoverImage": true,
+    "runTask": false
   }
 }
 
