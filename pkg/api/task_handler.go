@@ -151,6 +151,7 @@ func (h *TaskHandler) HandleNovelPage(c *gin.Context) {
 		return
 	}
 }
+
 func (h *TaskHandler) RunScheduleTask(c *gin.Context) {
 
 }
