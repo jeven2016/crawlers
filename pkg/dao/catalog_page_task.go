@@ -3,7 +3,7 @@ package dao
 import (
 	"context"
 	"crawlers/pkg/base"
-	"crawlers/pkg/model"
+	"crawlers/pkg/model/entity"
 	"errors"
 	"github.com/jeven2016/mylibs/system"
 	"go.mongodb.org/mongo-driver/bson"
@@ -14,37 +14,37 @@ import (
 )
 
 type catalogPageTaskInterface interface {
-	FindById(ctx context.Context, id primitive.ObjectID) (*model.CatalogPageTask, error)
-	FindByUrl(ctx context.Context, url string) (*model.CatalogPageTask, error)
+	FindById(ctx context.Context, id primitive.ObjectID) (*entity.CatalogPageTask, error)
+	FindByUrl(ctx context.Context, url string) (*entity.CatalogPageTask, error)
 	ExistsById(ctx context.Context, id primitive.ObjectID) (bool, error)
 	ExistsByName(ctx context.Context, name string) (bool, error)
-	Save(ctx context.Context, task *model.CatalogPageTask) (*primitive.ObjectID, error)
+	Save(ctx context.Context, task *entity.CatalogPageTask) (*primitive.ObjectID, error)
 }
 
 type catalogPageTaskDaoImpl struct{}
 
-func (c *catalogPageTaskDaoImpl) FindById(ctx context.Context, id primitive.ObjectID) (*model.CatalogPageTask, error) {
-	return FindById(ctx, id, base.CollectionCatalogPageTask, &model.CatalogPageTask{})
+func (c *catalogPageTaskDaoImpl) FindById(ctx context.Context, id primitive.ObjectID) (*entity.CatalogPageTask, error) {
+	return FindById(ctx, id, base.CollectionCatalogPageTask, &entity.CatalogPageTask{})
 }
 
-func (c *catalogPageTaskDaoImpl) FindByUrl(ctx context.Context, url string) (*model.CatalogPageTask, error) {
-	task, err := FindByMongoFilter(ctx, bson.M{base.ColumnUrl: url}, base.CollectionCatalogPageTask, &model.CatalogPageTask{})
+func (c *catalogPageTaskDaoImpl) FindByUrl(ctx context.Context, url string) (*entity.CatalogPageTask, error) {
+	task, err := FindByMongoFilter(ctx, bson.M{base.ColumnUrl: url}, base.CollectionCatalogPageTask, &entity.CatalogPageTask{})
 	return task, err
 }
 
 func (s *catalogPageTaskDaoImpl) ExistsById(ctx context.Context, id primitive.ObjectID) (bool, error) {
-	task, err := FindById(ctx, id, base.CollectionCatalogPageTask, &model.CatalogPageTask{},
+	task, err := FindById(ctx, id, base.CollectionCatalogPageTask, &entity.CatalogPageTask{},
 		&options.FindOneOptions{Projection: bson.M{base.ColumId: 1}})
 	return task != nil, err
 }
 
 func (s *catalogPageTaskDaoImpl) ExistsByName(ctx context.Context, name string) (bool, error) {
-	task, err := FindByMongoFilter(ctx, bson.M{base.ColumnName: name}, base.CollectionCatalogPageTask, &model.CatalogPageTask{},
+	task, err := FindByMongoFilter(ctx, bson.M{base.ColumnName: name}, base.CollectionCatalogPageTask, &entity.CatalogPageTask{},
 		&options.FindOneOptions{Projection: bson.M{base.ColumId: 1}})
 	return task != nil, err
 }
 
-func (c *catalogPageTaskDaoImpl) Save(ctx context.Context, task *model.CatalogPageTask) (*primitive.ObjectID, error) {
+func (c *catalogPageTaskDaoImpl) Save(ctx context.Context, task *entity.CatalogPageTask) (*primitive.ObjectID, error) {
 	collection := system.GetSystem().GetCollection(base.CollectionCatalogPageTask)
 	if collection == nil {
 		zap.L().Error("collection not found: " + base.CollectionCatalogPageTask)

@@ -5,7 +5,6 @@ import (
 	"crawlers/pkg/base"
 	"crawlers/pkg/dao"
 	"crawlers/pkg/metrics"
-	"crawlers/pkg/model"
 	"crawlers/pkg/model/entity"
 	"fmt"
 	"github.com/duke-git/lancet/v2/fileutil"
@@ -61,14 +60,14 @@ func (c CartoonCrawler) CrawlHomePage(ctx context.Context, url string) error {
 	panic("implement me")
 }
 
-func (c CartoonCrawler) CrawlCatalogPage(ctx context.Context, catalogPageTask *model.CatalogPageTask) ([]model.NovelTask, error) {
+func (c CartoonCrawler) CrawlCatalogPage(ctx context.Context, catalogPageTask *entity.CatalogPageTask) ([]entity.NovelTask, error) {
 	zap.L().Info("Got CatalogPageTask message", zap.String("url", catalogPageTask.Url))
-	var novelTasks []model.NovelTask
+	var novelTasks []entity.NovelTask
 	cly := c.colly.Clone()
 	cly.OnHTML(".card .lines.lines-2 a.visited", func(element *colly.HTMLElement) {
 		href := element.Attr("href")
 		novelUrl := utils.BuildUrl(catalogPageTask.Url, href)
-		novelTasks = append(novelTasks, model.NovelTask{
+		novelTasks = append(novelTasks, entity.NovelTask{
 			Url:      novelUrl,
 			SiteName: catalogPageTask.SiteName,
 		})
@@ -81,11 +80,11 @@ func (c CartoonCrawler) CrawlCatalogPage(ctx context.Context, catalogPageTask *m
 	return novelTasks, nil
 }
 
-func (c CartoonCrawler) CrawlNovelPage(ctx context.Context, novelTask *model.NovelTask, skipSaveIfPresent bool) ([]model.ChapterTask, error) {
+func (c CartoonCrawler) CrawlNovelPage(ctx context.Context, novelTask *entity.NovelTask, skipSaveIfPresent bool) ([]entity.ChapterTask, error) {
 	zap.L().Info("Got novel message", zap.String("url", novelTask.Url))
 	var createdTime = time.Now()
 	var novel = entity.Novel{Attributes: make(map[string]interface{}), CreatedTime: &createdTime}
-	var chpTasks []model.ChapterTask
+	var chpTasks []entity.ChapterTask
 	cly := c.colly.Clone()
 	//获取名称
 	cly.OnHTML(".title.py-1", func(element *colly.HTMLElement) {
@@ -103,7 +102,7 @@ func (c CartoonCrawler) CrawlNovelPage(ctx context.Context, novelTask *model.Nov
 	//只有单章的情况
 	cly.OnHTML(".btn.btn-primary.mr-2.mb-2", func(a *colly.HTMLElement) {
 		chapterName := c.zhConvertor.Read(a.Text)
-		chpTask := model.ChapterTask{
+		chpTask := entity.ChapterTask{
 			Name:     chapterName,
 			SiteName: novelTask.SiteName,
 			Url:      utils.BuildUrl(novelTask.Url, a.Attr("href")),
@@ -114,7 +113,7 @@ func (c CartoonCrawler) CrawlNovelPage(ctx context.Context, novelTask *model.Nov
 	//多章节情况：获取每一页上面的chapter内容
 	cly.OnHTML(".btn.btn-info.mr-2.mb-2", func(a *colly.HTMLElement) {
 		chapterName := c.zhConvertor.Read(a.Text)
-		chpTask := model.ChapterTask{
+		chpTask := entity.ChapterTask{
 			Name:     chapterName,
 			SiteName: novelTask.SiteName,
 			Url:      utils.BuildUrl(novelTask.Url, a.Attr("href")),
@@ -168,7 +167,7 @@ func (c CartoonCrawler) CrawlNovelPage(ctx context.Context, novelTask *model.Nov
 	return chpTasks, nil
 }
 
-func (c CartoonCrawler) CrawlChapterPage(ctx context.Context, chapterTask *model.ChapterTask, skipSaveIfPresent bool) error {
+func (c CartoonCrawler) CrawlChapterPage(ctx context.Context, chapterTask *entity.ChapterTask, skipSaveIfPresent bool) error {
 	var err error
 	var restyClient *resty.Client
 	var novel *entity.Novel

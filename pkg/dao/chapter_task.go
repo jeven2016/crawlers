@@ -3,7 +3,7 @@ package dao
 import (
 	"context"
 	"crawlers/pkg/base"
-	"crawlers/pkg/model"
+	"crawlers/pkg/model/entity"
 	"errors"
 	"github.com/jeven2016/mylibs/system"
 	"go.mongodb.org/mongo-driver/bson"
@@ -14,18 +14,18 @@ import (
 )
 
 type chapterTaskInterface interface {
-	FindByUrl(ctx context.Context, url string) (*model.ChapterTask, error)
-	Save(ctx context.Context, task *model.ChapterTask) (*primitive.ObjectID, error)
+	FindByUrl(ctx context.Context, url string) (*entity.ChapterTask, error)
+	Save(ctx context.Context, task *entity.ChapterTask) (*primitive.ObjectID, error)
 }
 
 type chapterTaskDaoImpl struct{}
 
-func (c *chapterTaskDaoImpl) FindByUrl(ctx context.Context, url string) (*model.ChapterTask, error) {
-	task, err := FindByMongoFilter(ctx, bson.M{base.ColumnUrl: url}, base.CollectionChapterTask, &model.ChapterTask{})
+func (c *chapterTaskDaoImpl) FindByUrl(ctx context.Context, url string) (*entity.ChapterTask, error) {
+	task, err := FindByMongoFilter(ctx, bson.M{base.ColumnUrl: url}, base.CollectionChapterTask, &entity.ChapterTask{})
 	return task, err
 }
 
-func (c *chapterTaskDaoImpl) Save(ctx context.Context, task *model.ChapterTask) (*primitive.ObjectID, error) {
+func (c *chapterTaskDaoImpl) Save(ctx context.Context, task *entity.ChapterTask) (*primitive.ObjectID, error) {
 	collection := system.GetSystem().GetCollection(base.CollectionChapterTask)
 	if collection == nil {
 		zap.L().Error("collection not found: " + base.CollectionChapterTask)

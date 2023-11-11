@@ -5,12 +5,13 @@ import (
 	"crawlers/pkg/api"
 	"crawlers/pkg/base"
 	"crawlers/pkg/dao"
-	"crawlers/pkg/website"
+	"crawlers/pkg/processor"
 	_ "embed"
 	"errors"
 	"fmt"
 	gconfig "github.com/jeven2016/mylibs/config"
 	"github.com/jeven2016/mylibs/system"
+	"github.com/jeven2016/mylibs/utils"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"net/http"
@@ -44,7 +45,7 @@ func run() {
 		Run: func(cmd *cobra.Command, args []string) {
 			cfg := &base.ServerConfig{}
 			if err := gconfig.LoadConfig([]byte(configFile), cfg, extraConfigFile, base.ConfigFiles); err != nil {
-				base.PrintCmdErr(err)
+				utils.PrintCmdErr(err)
 				return
 			}
 
@@ -59,7 +60,7 @@ func run() {
 				//ensure the indexes are created
 				dao.EnsureMongoIndexes(ctx)
 
-				website.RegisterProcessors()
+				processor.RegisterProcessors()
 
 				//if err := stream.LaunchGlobalSiteStream(ctx); err != nil {
 				//	zap.L().Error("failed to register streams", zap.Error(err))
@@ -79,7 +80,7 @@ func run() {
 	extraConfigFile = rootCmd.Flags().StringP(flagName, "c", "", "the absolute path of yaml config file")
 
 	if err := rootCmd.Execute(); err != nil {
-		base.PrintCmdErr(err)
+		utils.PrintCmdErr(err)
 	}
 }
 

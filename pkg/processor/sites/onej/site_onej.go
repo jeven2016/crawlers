@@ -3,7 +3,7 @@ package onej
 import (
 	"context"
 	"crawlers/pkg/base"
-	"crawlers/pkg/model"
+	"crawlers/pkg/model/entity"
 	"encoding/base64"
 	"github.com/go-resty/resty/v2"
 	"github.com/gocolly/colly/v2"
@@ -54,7 +54,7 @@ const attachmentUriKey = "attachmentUri"
 const directory = "directory"
 
 // HandleCatalogPage 解析每一页
-func (s *SiteOnej) CrawlCatalogPage(ctx context.Context, catalogPageMsg *model.CatalogPageTask) ([]model.NovelTask, error) {
+func (s *SiteOnej) CrawlCatalogPage(ctx context.Context, catalogPageMsg *entity.CatalogPageTask) ([]entity.NovelTask, error) {
 	collyCtx := colly.NewContext()
 
 	url := catalogPageMsg.Url
@@ -63,10 +63,10 @@ func (s *SiteOnej) CrawlCatalogPage(ctx context.Context, catalogPageMsg *model.C
 		return nil, err
 	} else if result > 0 {
 		s.logger.Info("url has been handled, just ignores", zap.String("url", url))
-		return []model.NovelTask{}, nil
+		return []entity.NovelTask{}, nil
 	}
 
-	var novelMsgs []model.NovelTask
+	var novelMsgs []entity.NovelTask
 
 	//遍历每一个面板进行解析
 	s.colly.OnHTML(".columns", func(element *colly.HTMLElement) {
@@ -89,7 +89,7 @@ func (s *SiteOnej) CrawlCatalogPage(ctx context.Context, catalogPageMsg *model.C
 		if !strings.HasPrefix(attachmentUri, "http") {
 			attachmentUri = utils.BuildUrl(url, attachmentUri)
 		}
-		novelMsgs = append(novelMsgs, model.NovelTask{
+		novelMsgs = append(novelMsgs, entity.NovelTask{
 			Name:      name,
 			CatalogId: catalogPageMsg.CatalogId,
 			Url:       imgSrc, //使用图片地址作为novel的首页地址
@@ -114,14 +114,14 @@ func (s *SiteOnej) CrawlCatalogPage(ctx context.Context, catalogPageMsg *model.C
 }
 
 // HandleNovelPage 解析具体的Novel
-func (s *SiteOnej) CrawlNovelPage(ctx context.Context, novelPageMsg *model.NovelTask, skipSaveIfPresent bool) ([]model.ChapterTask, error) {
+func (s *SiteOnej) CrawlNovelPage(ctx context.Context, novelPageMsg *entity.NovelTask, skipSaveIfPresent bool) ([]entity.ChapterTask, error) {
 	s.logger.Info("Got novel message", zap.String("name", novelPageMsg.Name))
 
 	if picDir, ok := s.siteCfg.Attributes[directory]; ok {
 		//获取catalog name
 		catalogName, err := utils.GetAndSet(ctx, novelPageMsg.CatalogId.String(), func() (*string, error) {
 			catlogCol := system.GetSystem().GetCollection(base.CollectionCatalog)
-			var catalogMsg model.CatalogTask
+			var catalogMsg entity.CatalogTask
 			if err := catlogCol.FindOne(ctx, bson.M{base.ColumId: novelPageMsg.CatalogId}).Decode(&catalogMsg); err != nil {
 				return nil, err
 			} else {
@@ -177,13 +177,13 @@ func (s *SiteOnej) CrawlNovelPage(ctx context.Context, novelPageMsg *model.Novel
 		}
 	}
 
-	return []model.ChapterTask{}, nil
+	return []entity.ChapterTask{}, nil
 }
 
 func (s *SiteOnej) CrawlHomePage(ctx context.Context, url string) error {
 	//TODO implement me
 	panic("implement me")
 }
-func (s *SiteOnej) CrawlChapterPage(ctx context.Context, chapterMsg *model.ChapterTask, skipSaveIfPresent bool) error {
+func (s *SiteOnej) CrawlChapterPage(ctx context.Context, chapterMsg *entity.ChapterTask, skipSaveIfPresent bool) error {
 	panic("implement me")
 }

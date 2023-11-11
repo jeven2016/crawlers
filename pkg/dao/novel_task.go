@@ -3,7 +3,7 @@ package dao
 import (
 	"context"
 	"crawlers/pkg/base"
-	"crawlers/pkg/model"
+	"crawlers/pkg/model/entity"
 	"errors"
 	"github.com/jeven2016/mylibs/system"
 	"go.mongodb.org/mongo-driver/bson"
@@ -14,18 +14,18 @@ import (
 )
 
 type novelTaskInterface interface {
-	FindByUrl(ctx context.Context, url string) (*model.NovelTask, error)
-	Save(ctx context.Context, task *model.NovelTask) (*primitive.ObjectID, error)
+	FindByUrl(ctx context.Context, url string) (*entity.NovelTask, error)
+	Save(ctx context.Context, task *entity.NovelTask) (*primitive.ObjectID, error)
 }
 
 type novelTaskDaoImpl struct{}
 
-func (c *novelTaskDaoImpl) FindByUrl(ctx context.Context, url string) (*model.NovelTask, error) {
-	task, err := FindByMongoFilter(ctx, bson.M{base.ColumnUrl: url}, base.CollectionNovelTask, &model.NovelTask{})
+func (c *novelTaskDaoImpl) FindByUrl(ctx context.Context, url string) (*entity.NovelTask, error) {
+	task, err := FindByMongoFilter(ctx, bson.M{base.ColumnUrl: url}, base.CollectionNovelTask, &entity.NovelTask{})
 	return task, err
 }
 
-func (c *novelTaskDaoImpl) Save(ctx context.Context, task *model.NovelTask) (*primitive.ObjectID, error) {
+func (c *novelTaskDaoImpl) Save(ctx context.Context, task *entity.NovelTask) (*primitive.ObjectID, error) {
 	collection := system.GetSystem().GetCollection(base.CollectionNovelTask)
 	if collection == nil {
 		zap.L().Error("collection not found: " + base.CollectionNovelTask)

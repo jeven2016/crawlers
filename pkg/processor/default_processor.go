@@ -1,11 +1,11 @@
-package website
+package processor
 
 import (
 	"context"
 	"crawlers/pkg/base"
 	"crawlers/pkg/dao"
 	"crawlers/pkg/metrics"
-	"crawlers/pkg/model"
+	"crawlers/pkg/model/entity"
 	"encoding/json"
 	"errors"
 	"github.com/duke-git/lancet/v2/convertor"
@@ -20,8 +20,8 @@ import (
 
 type TaskProcessor interface {
 	ParsePageUrls(siteName, originPageUrl string) ([]string, error)
-	HandleCatalogPageTask(jsonData string) []model.NovelTask
-	HandleNovelTask(jsonData string) []model.ChapterTask
+	HandleCatalogPageTask(jsonData string) []entity.NovelTask
+	HandleNovelTask(jsonData string) []entity.ChapterTask
 	HandleChapterTask(jsonData string) interface{}
 }
 
@@ -45,8 +45,8 @@ func (d DefaultTaskProcessor) ParsePageUrls(siteName, originPageUrl string) ([]s
 	return base.GenPageUrls(cfg.RegexSettings.ParsePageRegex, originPageUrl, cfg.RegexSettings.PagePrefix, "")
 }
 
-func (d DefaultTaskProcessor) HandleCatalogPageTask(jsonData string) (novelMsgs []model.NovelTask) {
-	var catalogPageTask model.CatalogPageTask
+func (d DefaultTaskProcessor) HandleCatalogPageTask(jsonData string) (novelMsgs []entity.NovelTask) {
+	var catalogPageTask entity.CatalogPageTask
 	var err error
 
 	metrics.MetricsRuningCatalogPageTasksGauge.Inc()
@@ -82,7 +82,7 @@ func (d DefaultTaskProcessor) HandleCatalogPageTask(jsonData string) (novelMsgs 
 	}
 
 	//check if page url is duplicated
-	exists, err := d.isDuplicatedCatalogPageTask(&model.CatalogPageTask{},
+	exists, err := d.isDuplicatedCatalogPageTask(&entity.CatalogPageTask{},
 		base.CollectionCatalogPageTask,
 		catalogPageTask.Url,
 		bson.M{
@@ -106,7 +106,7 @@ func (d DefaultTaskProcessor) HandleCatalogPageTask(jsonData string) (novelMsgs 
 	}
 
 	//check if it exists in db
-	var existingTask *model.CatalogPageTask
+	var existingTask *entity.CatalogPageTask
 	if existingTask, err = dao.CatalogPageTaskDao.FindByUrl(context.Background(), catalogPageTask.Url); err != nil {
 		zap.L().Error("failed to retrieve catalog page task", zap.String("jsonData", jsonData), zap.Error(err))
 		return nil
@@ -159,8 +159,8 @@ func (d DefaultTaskProcessor) HandleCatalogPageTask(jsonData string) (novelMsgs 
 	return
 }
 
-func (d DefaultTaskProcessor) HandleNovelTask(jsonData string) (chapterMessages []model.ChapterTask) {
-	var novelTask model.NovelTask
+func (d DefaultTaskProcessor) HandleNovelTask(jsonData string) (chapterMessages []entity.ChapterTask) {
+	var novelTask entity.NovelTask
 	var err error
 
 	metrics.MetricsRuningNovelTasksGauge.Inc()
@@ -209,7 +209,7 @@ func (d DefaultTaskProcessor) HandleNovelTask(jsonData string) (chapterMessages 
 	}
 
 	//check if page url is duplicated
-	exists, err := d.isDuplicatedNovelTask(&model.NovelTask{},
+	exists, err := d.isDuplicatedNovelTask(&entity.NovelTask{},
 		base.CollectionNovelTask,
 		novelTask.Url,
 		bson.M{
@@ -232,7 +232,7 @@ func (d DefaultTaskProcessor) HandleNovelTask(jsonData string) (chapterMessages 
 	}
 
 	//check if it exists in db
-	var existingTask *model.NovelTask
+	var existingTask *entity.NovelTask
 	if existingTask, err = dao.NovelTaskDao.FindByUrl(context.Background(), novelTask.Url); err != nil {
 		zap.L().Error("failed to retrieve novel page task", zap.String("jsonData", jsonData), zap.Error(err))
 		return nil
@@ -284,7 +284,7 @@ func (d DefaultTaskProcessor) HandleNovelTask(jsonData string) (chapterMessages 
 }
 
 func (d DefaultTaskProcessor) HandleChapterTask(jsonData string) interface{} {
-	var chapterTask model.ChapterTask
+	var chapterTask entity.ChapterTask
 	var err error
 
 	metrics.MetricsRuningChapterTasksGauge.Inc()
@@ -323,7 +323,7 @@ func (d DefaultTaskProcessor) HandleChapterTask(jsonData string) interface{} {
 	}
 
 	//check if page url is duplicated
-	exists, err := d.isDuplicatedChapterTask(&model.ChapterTask{},
+	exists, err := d.isDuplicatedChapterTask(&entity.ChapterTask{},
 		base.CollectionChapterTask,
 		chapterTask.Url,
 		bson.M{
@@ -345,7 +345,7 @@ func (d DefaultTaskProcessor) HandleChapterTask(jsonData string) interface{} {
 	}
 
 	//check if it exists in db
-	var existingTask *model.ChapterTask
+	var existingTask *entity.ChapterTask
 	if existingTask, err = dao.ChapterTaskDao.FindByUrl(context.Background(), chapterTask.Url); err != nil {
 		zap.L().Error("failed to retrieve chapter page task", zap.String("jsonData", jsonData), zap.Error(err))
 		return nil
@@ -407,7 +407,7 @@ func (d DefaultTaskProcessor) HandleChapterTask(jsonData string) interface{} {
 }
 
 // 检查是否已经处理过的url, 状态是finished状态
-func (t DefaultTaskProcessor) isDuplicatedNovelTask(cpTask *model.NovelTask, collectionName,
+func (t DefaultTaskProcessor) isDuplicatedNovelTask(cpTask *entity.NovelTask, collectionName,
 	url string, bsonFilter bson.M) (bool /*existence*/, error /*interrupted*/) {
 	jsonString, err := utils.GetAndSet(context.Background(), url, func() (*string, error) {
 		if data, err := dao.FindByMongoFilter(context.Background(), bsonFilter, collectionName, cpTask, &options.FindOneOptions{}); err != nil {
@@ -432,7 +432,7 @@ func (t DefaultTaskProcessor) isDuplicatedNovelTask(cpTask *model.NovelTask, col
 }
 
 // 检查是否已经处理过的url
-func (t DefaultTaskProcessor) isDuplicatedChapterTask(cpTask *model.ChapterTask, collectionName,
+func (t DefaultTaskProcessor) isDuplicatedChapterTask(cpTask *entity.ChapterTask, collectionName,
 	url string, bsonFilter bson.M) (bool /*existence*/, error /*interrupted*/) {
 	jsonString, err := utils.GetAndSet(context.Background(), url, func() (*string, error) {
 		if data, err := dao.FindByMongoFilter(context.Background(), bsonFilter, collectionName,
@@ -458,7 +458,7 @@ func (t DefaultTaskProcessor) isDuplicatedChapterTask(cpTask *model.ChapterTask,
 }
 
 // 检查是否已经处理过的url
-func (t DefaultTaskProcessor) isDuplicatedCatalogPageTask(cpTask *model.CatalogPageTask, collectionName,
+func (t DefaultTaskProcessor) isDuplicatedCatalogPageTask(cpTask *entity.CatalogPageTask, collectionName,
 	url string, bsonFilter bson.M) (bool /*existence*/, error /*interrupted*/) {
 
 	jsonString, err := utils.GetAndSet(context.Background(), url, func() (*string, error) {
@@ -479,5 +479,5 @@ func (t DefaultTaskProcessor) isDuplicatedCatalogPageTask(cpTask *model.CatalogP
 	if err = json.Unmarshal([]byte(*jsonString), cpTask); err != nil {
 		return false, err
 	}
-	return (model.Resource(cpTask)).GetStatus() == base.TaskStatusFinished, err
+	return (entity.Resource(cpTask)).GetStatus() == base.TaskStatusFinished, err
 }

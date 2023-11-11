@@ -4,7 +4,6 @@ import (
 	"context"
 	"crawlers/pkg/base"
 	"crawlers/pkg/dao"
-	"crawlers/pkg/model"
 	"crawlers/pkg/model/entity"
 	"github.com/chromedp/chromedp"
 	"github.com/go-creed/sat"
@@ -59,14 +58,14 @@ var removeTexts = []string{
 }
 
 // CrawlCatalogPage 解析每一页
-func (n *NsfCrawler) CrawlCatalogPage(ctx context.Context, catalogPageTask *model.CatalogPageTask) ([]model.NovelTask, error) {
+func (n *NsfCrawler) CrawlCatalogPage(ctx context.Context, catalogPageTask *entity.CatalogPageTask) ([]entity.NovelTask, error) {
 	zap.L().Info("Got CatalogPageTask message", zap.String("url", catalogPageTask.Url))
-	var novelTasks []model.NovelTask
+	var novelTasks []entity.NovelTask
 	cly := n.colly.Clone()
 	cly.OnHTML(".CGsectionTwo-right-content-unit .title", func(element *colly.HTMLElement) {
 		href := element.Attr("href")
 		novelUrl := utils.BuildUrl(catalogPageTask.Url, href)
-		novelTasks = append(novelTasks, model.NovelTask{
+		novelTasks = append(novelTasks, entity.NovelTask{
 			Url:      novelUrl,
 			SiteName: catalogPageTask.SiteName,
 		})
@@ -79,11 +78,11 @@ func (n *NsfCrawler) CrawlCatalogPage(ctx context.Context, catalogPageTask *mode
 }
 
 // CrawlNovelPage 解析具体的Novel
-func (n *NsfCrawler) CrawlNovelPage(ctx context.Context, novelTask *model.NovelTask, skipSaveIfPresent bool) ([]model.ChapterTask, error) {
+func (n *NsfCrawler) CrawlNovelPage(ctx context.Context, novelTask *entity.NovelTask, skipSaveIfPresent bool) ([]entity.ChapterTask, error) {
 	zap.L().Info("Got novel message", zap.String("url", novelTask.Url))
 	var createdTime = time.Now()
 	var novel = entity.Novel{Attributes: make(map[string]interface{}), CreatedTime: &createdTime}
-	var chpTasks []model.ChapterTask
+	var chpTasks []entity.ChapterTask
 	cly := n.colly.Clone()
 	//获取名称
 	cly.OnHTML(".title", func(element *colly.HTMLElement) {
@@ -120,7 +119,7 @@ func (n *NsfCrawler) CrawlNovelPage(ctx context.Context, novelTask *model.NovelT
 	//获取每一页上面的chapter内容
 	cly.OnHTML(".BCsectionTwo-top-chapter a", func(a *colly.HTMLElement) {
 		chapterName := n.zhConvertor.Read(a.Text)
-		chpTask := model.ChapterTask{
+		chpTask := entity.ChapterTask{
 			Name:     chapterName,
 			SiteName: novelTask.SiteName,
 			Url:      utils.BuildUrl(novelTask.Url, a.Attr("href")),
@@ -181,7 +180,7 @@ func (n *NsfCrawler) CrawlHomePage(ctx context.Context, url string) error {
 	panic("implement me")
 }
 
-func (n *NsfCrawler) CrawlChapterPage(ctx context.Context, chapterTask *model.ChapterTask, skipSaveIfPresent bool) (err error) {
+func (n *NsfCrawler) CrawlChapterPage(ctx context.Context, chapterTask *entity.ChapterTask, skipSaveIfPresent bool) (err error) {
 	zap.L().Info("Got chapter message", zap.String("url", chapterTask.Url))
 	var createdTime = time.Now()
 

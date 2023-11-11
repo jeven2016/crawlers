@@ -5,7 +5,6 @@ import (
 	"crawlers/pkg/base"
 	"crawlers/pkg/dao"
 	"crawlers/pkg/metrics"
-	"crawlers/pkg/model"
 	"crawlers/pkg/model/entity"
 	"fmt"
 	"github.com/duke-git/lancet/v2/fileutil"
@@ -25,7 +24,7 @@ import (
 	"time"
 )
 
-type wucomicCrawler struct {
+type kxkmCrawler struct {
 	redis       *cache.Redis
 	mongoClient *db.Mongo
 	colly       *colly.Collector
@@ -34,7 +33,7 @@ type wucomicCrawler struct {
 	zhConvertor sat.Dicter
 }
 
-func NewWucomicCrawler() *wucomicCrawler {
+func NewKxkmCrawler() *kxkmCrawler {
 	sys := system.GetSystem()
 	cfg := base.GetSiteConfig(base.Cartoon18)
 	if cfg == nil {
@@ -46,7 +45,7 @@ func NewWucomicCrawler() *wucomicCrawler {
 		zap.L().Warn("Could not create collector", zap.Error(err))
 	}
 
-	return &wucomicCrawler{
+	return &kxkmCrawler{
 		redis:       sys.RedisClient,
 		mongoClient: sys.MongoClient,
 		colly:       collyClient,
@@ -56,19 +55,19 @@ func NewWucomicCrawler() *wucomicCrawler {
 	}
 }
 
-func (c wucomicCrawler) CrawlHomePage(ctx context.Context, url string) error {
+func (c kxkmCrawler) CrawlHomePage(ctx context.Context, url string) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (c wucomicCrawler) CrawlCatalogPage(ctx context.Context, catalogPageTask *model.CatalogPageTask) ([]model.NovelTask, error) {
-	zap.L().Info("[wucomic] Got CatalogPageTask message", zap.String("url", catalogPageTask.Url))
-	var novelTasks []model.NovelTask
+func (c kxkmCrawler) CrawlCatalogPage(ctx context.Context, catalogPageTask *entity.CatalogPageTask) ([]entity.NovelTask, error) {
+	zap.L().Info("[kxkm] Got CatalogPageTask message", zap.String("url", catalogPageTask.Url))
+	var novelTasks []entity.NovelTask
 	cly := c.colly.Clone()
-	cly.OnHTML(".cartoon-cover", func(element *colly.HTMLElement) {
+	cly.OnHTML(".product__item__text > h6 > a", func(element *colly.HTMLElement) {
 		href := element.Attr("href")
 		novelUrl := utils.BuildUrl(catalogPageTask.Url, href)
-		novelTasks = append(novelTasks, model.NovelTask{
+		novelTasks = append(novelTasks, entity.NovelTask{
 			Url:      novelUrl,
 			SiteName: catalogPageTask.SiteName,
 		})
@@ -77,25 +76,33 @@ func (c wucomicCrawler) CrawlCatalogPage(ctx context.Context, catalogPageTask *m
 	if err := cly.Visit(catalogPageTask.Url); err != nil {
 		return nil, err
 	}
-	zap.L().Info("[wucomic] the number of novel tasks shall be processed", zap.Int("count", len(novelTasks)))
+	zap.L().Info("[kxkm] the number of novel tasks shall be processed", zap.Int("count", len(novelTasks)))
 	return novelTasks, nil
 }
 
-func (c wucomicCrawler) CrawlNovelPage(ctx context.Context, novelTask *model.NovelTask, skipSaveIfPresent bool) ([]model.ChapterTask, error) {
-	zap.L().Info("[wucomic] Got novel message", zap.String("url", novelTask.Url))
+func (c kxkmCrawler) CrawlNovelPage(ctx context.Context, novelTask *entity.NovelTask, skipSaveIfPresent bool) ([]entity.ChapterTask, error) {
+	zap.L().Info("[kxkm] Got novel message", zap.String("url", novelTask.Url))
 	var createdTime = time.Now()
 	var novel = entity.Novel{Attributes: make(map[string]interface{}), CreatedTime: &createdTime}
-	var chpTasks []model.ChapterTask
+	var chpTasks []entity.ChapterTask
+	var novelFolder string
+
 	cly := c.colly.Clone()
 	//获取名称
-	cly.OnHTML(".detail-tit", func(element *colly.HTMLElement) {
+	cly.OnHTML(".anime__details__title  h3", func(element *colly.HTMLElement) {
 		novel.Name = strings.TrimSpace(c.zhConvertor.Read(element.Text))
 	})
 
+	//获取封面图片
+	var coverImageUrl string
+	cly.OnHTML(".anime__details__pic.set-bg", func(img *colly.HTMLElement) {
+		coverImageUrl = img.Attr("data-setbg")
+	})
+
 	//多章节情况：获取每一页上面的chapter内容
-	cly.OnHTML(".chapter-container a", func(a *colly.HTMLElement) {
-		chapterName := c.zhConvertor.Read(a.Attr("title"))
-		chpTask := model.ChapterTask{
+	cly.OnHTML(".chapter_list a", func(a *colly.HTMLElement) {
+		chapterName := c.zhConvertor.Read(a.Text)
+		chpTask := entity.ChapterTask{
 			Name:     chapterName,
 			SiteName: novelTask.SiteName,
 			Url:      utils.BuildUrl(novelTask.Url, a.Attr("href")),
@@ -133,35 +140,52 @@ func (c wucomicCrawler) CrawlNovelPage(ctx context.Context, novelTask *model.Nov
 	}
 
 	if len(chpTasks) == 0 {
-		zap.L().Error("[wucomic] no chapters found for novel", zap.String("novelName", novel.Name))
+		zap.L().Error("[kxkm] no chapters found for novel", zap.String("novelName", novel.Name))
 	} else {
-		zap.L().Info("[wucomic] number of chapters found for novel", zap.String("novelName", novel.Name),
+		zap.L().Info("[kxkm] number of chapters found for novel", zap.String("novelName", novel.Name),
 			zap.Int("number", len(chpTasks)))
 	}
 
 	//create directory
 	if novelDir, ok := c.siteCfg.Attributes["directory"]; ok {
-		novelFolder := filepath.Join(novelDir, novel.Name)
+		novelFolder = filepath.Join(novelDir, novel.Name)
 
 		if fileutil.IsExist(novelFolder) {
-			zap.L().Info("[wucomic] duplicated novel and no need to create directory", zap.String("novelName", novel.Name))
-			return []model.ChapterTask{}, nil
+			zap.L().Info("[kxkm] duplicated novel and no need to create directory", zap.String("novelName", novel.Name))
+		} else {
+			err = os.MkdirAll(novelFolder, 0755)
 		}
-		if err = os.MkdirAll(novelFolder, 0755); err != nil {
-			return chpTasks, err
+
+		//下载封面图片
+		if err == nil && coverImageUrl != "" {
+			destFile := filepath.Join(novelFolder, "cover.jpg")
+			if exist := fileutil.IsExist(destFile); !exist {
+				client, err := client.GetRestyClient(novelTask.Url, true)
+				if err != nil {
+					return chpTasks, err
+				}
+				if _, err = client.R().SetOutput(destFile).Get(coverImageUrl); err != nil {
+					metrics.MetricsFailedComicPicTaskGauge.Inc()
+					zap.L().Error("[kxkm] failed to download cover picture", zap.String("url", coverImageUrl), zap.Error(err))
+					return chpTasks, err
+				} else {
+					metrics.MetricsComicPicDownloaded.Inc()
+					zap.L().Info("[kxkm] cover picture downloaded", zap.String("url", coverImageUrl), zap.String("localFile", destFile))
+				}
+			}
 		}
 	}
 
-	return chpTasks, nil
+	return chpTasks, err
 }
 
-func (c wucomicCrawler) CrawlChapterPage(ctx context.Context, chapterTask *model.ChapterTask, skipSaveIfPresent bool) error {
+func (c kxkmCrawler) CrawlChapterPage(ctx context.Context, chapterTask *entity.ChapterTask, skipSaveIfPresent bool) error {
 	var err error
 	var restyClient *resty.Client
 	var novel *entity.Novel
 
 	cly := c.colly.Clone()
-	zap.L().Info("[wucomic] Got chapter message", zap.String("url", chapterTask.Url))
+	zap.L().Info("[kxkm] Got chapter message", zap.String("url", chapterTask.Url))
 
 	if novel, err = dao.NovelDao.FindById(ctx, chapterTask.NovelId); err != nil {
 		return err
@@ -180,8 +204,10 @@ func (c wucomicCrawler) CrawlChapterPage(ctx context.Context, chapterTask *model
 		return fmt.Errorf("no chapter directory specified %v", c.siteCfg.Attributes["directory"])
 	}
 
-	var i = 1
-	cly.OnHTML(".cropped", func(img *colly.HTMLElement) {
+	var fileFormat string
+	var i = 0
+	cly.OnHTML(".blog__details__content>img", func(img *colly.HTMLElement) {
+		i++
 		if err != nil {
 			metrics.MetricsFailedComicPicTaskGauge.Inc()
 			return
@@ -197,23 +223,25 @@ func (c wucomicCrawler) CrawlChapterPage(ctx context.Context, chapterTask *model
 			return
 		}
 
-		var fileFormat = ".jpg"
+		fileFormat, err = utils.GetFileExtFromUrl(picUrl)
+		if err != nil {
+			return
+		}
 		destFile := filepath.Join(chapterDir, fmt.Sprintf("%04d", i)+fileFormat)
-		i++
 
 		if fileutil.IsExist(destFile) {
 			metrics.MetricsComicPicDownloaded.Inc()
-			zap.L().Info("[wucomic] pic skipped since it exists in directory", zap.String("destFile", destFile))
+			zap.L().Info("[kxkm] pic skipped since it exists in directory", zap.String("destFile", destFile))
 			return
 		}
 
 		if _, err = restyClient.R().SetOutput(destFile).Get(picUrl); err != nil {
 			metrics.MetricsFailedComicPicTaskGauge.Inc()
-			zap.L().Error("[wucomic] failed to download picture", zap.String("url", picUrl), zap.Error(err))
+			zap.L().Error("[kxkm] failed to download picture", zap.String("url", picUrl), zap.Error(err))
 			return
 		} else {
 			metrics.MetricsComicPicDownloaded.Inc()
-			zap.L().Info("[wucomic] picture downloaded", zap.String("url", picUrl), zap.String("localFile", destFile))
+			zap.L().Info("[kxkm] picture downloaded", zap.String("url", picUrl), zap.String("localFile", destFile))
 		}
 	})
 	if err = cly.Visit(chapterTask.Url); err != nil {

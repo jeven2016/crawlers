@@ -3,10 +3,9 @@ package api
 import (
 	"crawlers/pkg/base"
 	"crawlers/pkg/dao"
-	"crawlers/pkg/model"
 	"crawlers/pkg/model/entity"
+	"crawlers/pkg/processor"
 	"crawlers/pkg/stream"
-	"crawlers/pkg/website"
 	"github.com/duke-git/lancet/v2/slice"
 	"github.com/gin-gonic/gin"
 	"github.com/jeven2016/mylibs/system"
@@ -34,12 +33,12 @@ func NewTaskHandler() *TaskHandler {
 // @Success 200
 // @Router /tasks/catalog-pages [post]
 func (h *TaskHandler) HandleCatalogPage(c *gin.Context) {
-	var pageTask model.CatalogPageTask
+	var pageTask entity.CatalogPageTask
 	if !bindJson(c, &pageTask) {
 		return
 	}
 
-	var sp website.TaskProcessor
+	var sp processor.TaskProcessor
 	var site *entity.Site
 	var hasError bool
 	var urls []string
@@ -50,7 +49,7 @@ func (h *TaskHandler) HandleCatalogPage(c *gin.Context) {
 	}
 
 	//if multiple pages need to handle
-	if sp = website.GetSiteTaskProcessor(site.Name); sp == nil {
+	if sp = processor.GetSiteTaskProcessor(site.Name); sp == nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, base.Fails(base.ErrCodeUnSupportedCatalog))
 		zap.L().Warn("no processor found for this siteKey", zap.String("siteKey", site.Name))
 		return
@@ -71,7 +70,7 @@ func (h *TaskHandler) HandleCatalogPage(c *gin.Context) {
 		}
 
 		//construct  a catalog page message
-		pageMsg := &model.CatalogPageTask{
+		pageMsg := &entity.CatalogPageTask{
 			SiteName:   site.Name,
 			CatalogId:  pageTask.CatalogId,
 			Url:        url,
@@ -123,7 +122,7 @@ func (h *TaskHandler) getTaskEntity(c *gin.Context, catalogId primitive.ObjectID
 // @Success 200
 // @Router /tasks/novels [post]
 func (h *TaskHandler) HandleNovelPage(c *gin.Context) {
-	var novelTask model.NovelTask
+	var novelTask entity.NovelTask
 	if !bindJson(c, &novelTask) {
 		return
 	}

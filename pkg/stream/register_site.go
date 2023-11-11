@@ -3,8 +3,8 @@ package stream
 import (
 	"context"
 	"crawlers/pkg/base"
-	"crawlers/pkg/model"
-	"crawlers/pkg/website"
+	"crawlers/pkg/model/entity"
+	"crawlers/pkg/processor"
 	"github.com/jeven2016/mylibs/system"
 	"github.com/reugn/go-streams/extension"
 	"github.com/reugn/go-streams/flow"
@@ -12,7 +12,7 @@ import (
 )
 
 type DefaultSiteStreamImpl struct {
-	pr     website.TaskProcessor
+	pr     processor.TaskProcessor
 	params *StreamTaskParams
 }
 
@@ -25,7 +25,7 @@ func LaunchGlobalSiteStream(ctx context.Context) error {
 func LaunchSiteStream(ctx context.Context, siteName string) (err error) {
 	siteStream := &DefaultSiteStreamImpl{
 		params: GenStreamTaskParams(siteName),
-		pr:     website.GetSiteTaskProcessor(siteName),
+		pr:     processor.GetSiteTaskProcessor(siteName),
 	}
 
 	//consume catalog page task message
@@ -55,7 +55,7 @@ func (d DefaultSiteStreamImpl) catalogPageStream(ctx context.Context) error {
 	err = system.GetSystem().TaskPool.Submit(func() {
 		source.
 			Via(flow.NewMap(d.pr.HandleCatalogPageTask, uint(base.GetConfig().CrawlerSettings.CatalogPageTaskParallelism))).
-			Via(flow.NewFlatMap(func(novelMsg []model.NovelTask) []model.NovelTask {
+			Via(flow.NewFlatMap(func(novelMsg []entity.NovelTask) []entity.NovelTask {
 				return novelMsg
 			}, 1)).
 			To(NewRedisStreamSink(ctx, system.GetSystem().RedisClient,
@@ -83,7 +83,7 @@ func (d DefaultSiteStreamImpl) novelStream(ctx context.Context) error {
 	err = system.GetSystem().TaskPool.Submit(func() {
 		source.
 			Via(flow.NewMap(d.pr.HandleNovelTask, uint(base.GetConfig().CrawlerSettings.NovelTaskParallelism))).
-			Via(flow.NewFlatMap(func(novelMsg []model.ChapterTask) []model.ChapterTask {
+			Via(flow.NewFlatMap(func(novelMsg []entity.ChapterTask) []entity.ChapterTask {
 				return novelMsg
 			}, 1)).
 			To(sink)
