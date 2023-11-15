@@ -36,7 +36,7 @@ func LaunchSiteStream(ctx context.Context, siteName string) error {
 		if siteStreamMap[siteName] == nil {
 			siteStream := &DefaultSiteStreamImpl{
 				params: GenStreamTaskParams(siteName),
-				pr:     processor2.GetSiteTaskProcessor(siteName),
+				pr:     processor.GetSiteTaskProcessor(siteName),
 			}
 
 			funcSlice := []func(ctx2 context.Context) error{
