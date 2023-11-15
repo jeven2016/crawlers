@@ -25,11 +25,11 @@ type TaskProcessor interface {
 	HandleChapterTask(jsonData string) interface{}
 }
 
-type DefaultTaskProcessor struct{}
-
 func NewTaskProcessor() TaskProcessor {
 	return &DefaultTaskProcessor{}
 }
+
+type DefaultTaskProcessor struct{}
 
 func (d DefaultTaskProcessor) ParsePageUrls(siteName, originPageUrl string) ([]string, error) {
 	cfg := base.GetSiteConfig(siteName)

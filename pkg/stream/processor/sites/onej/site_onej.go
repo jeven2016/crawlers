@@ -5,11 +5,9 @@ import (
 	"crawlers/pkg/base"
 	"crawlers/pkg/model/entity"
 	"encoding/base64"
-	"github.com/go-resty/resty/v2"
+	"errors"
 	"github.com/gocolly/colly/v2"
-	"github.com/jeven2016/mylibs/cache"
 	"github.com/jeven2016/mylibs/client"
-	"github.com/jeven2016/mylibs/db"
 	"github.com/jeven2016/mylibs/system"
 	"github.com/jeven2016/mylibs/utils"
 	"go.mongodb.org/mongo-driver/bson"
@@ -18,33 +16,17 @@ import (
 )
 
 type SiteOnej struct {
-	redis       *cache.Redis
-	mongoClient *db.Mongo
-	logger      *zap.Logger
-	colly       *colly.Collector
-	siteCfg     *base.SiteConfig
-	client      *resty.Client
+	colly *colly.Collector
 }
 
 func NewSiteOnej() *SiteOnej {
-	sys := system.GetSystem()
-	cfg := base.GetSiteConfig(base.SiteOneJ)
-	if cfg == nil {
-		zap.L().Sugar().Warn("Could not find site config", zap.String("siteName", base.SiteNsf))
-	}
-
 	collyClient, err := client.NewCollector("", 3)
 	if err != nil {
 		zap.L().Warn("Could not create collector", zap.Error(err))
 	}
 
 	return &SiteOnej{
-		redis:       sys.RedisClient,
-		mongoClient: sys.MongoClient,
-		logger:      zap.L(),
-		colly:       collyClient,
-		siteCfg:     cfg,
-		client:      resty.New(),
+		colly: collyClient,
 	}
 }
 
@@ -53,16 +35,17 @@ const imgSrcKey = "imgSrc"
 const attachmentUriKey = "attachmentUri"
 const directory = "directory"
 
-// HandleCatalogPage 解析每一页
+// CrawlCatalogPage 解析每一页
 func (s *SiteOnej) CrawlCatalogPage(ctx context.Context, catalogPageMsg *entity.CatalogPageTask) ([]entity.NovelTask, error) {
+	sys := system.GetSystem()
 	collyCtx := colly.NewContext()
 
 	url := catalogPageMsg.Url
 	base64Url := base64.StdEncoding.EncodeToString([]byte(url))
-	if result, err := s.redis.Client.Exists(ctx, base64Url).Result(); err != nil {
+	if result, err := sys.RedisClient.Client.Exists(ctx, base64Url).Result(); err != nil {
 		return nil, err
 	} else if result > 0 {
-		s.logger.Info("url has been handled, just ignores", zap.String("url", url))
+		zap.L().Info("url has been handled, just ignores", zap.String("url", url))
 		return []entity.NovelTask{}, nil
 	}
 
@@ -78,7 +61,7 @@ func (s *SiteOnej) CrawlCatalogPage(ctx context.Context, catalogPageMsg *entity.
 			actressNum = i
 		})
 		if actressNum >= maxActressNumberLimit {
-			s.logger.Info("actress number is large, just ignores", zap.Int("actressNum", actressNum),
+			zap.L().Info("actress number is large, just ignores", zap.Int("actressNum", actressNum),
 				zap.String("name", name), zap.String("url", url))
 		}
 
@@ -106,18 +89,22 @@ func (s *SiteOnej) CrawlCatalogPage(ctx context.Context, catalogPageMsg *entity.
 		println("ip=", ip)
 		retries := collyCtx.GetAny("retries")
 		println("retries=", retries)
-		s.logger.Error("visit error", zap.String("url", url), zap.Error(err))
+		zap.L().Error("visit error", zap.String("url", url), zap.Error(err))
 		return nil, err
 	}
 
 	return novelMsgs, nil
 }
 
-// HandleNovelPage 解析具体的Novel
+// CrawlNovelPage 解析具体的Novel
 func (s *SiteOnej) CrawlNovelPage(ctx context.Context, novelPageMsg *entity.NovelTask, skipSaveIfPresent bool) ([]entity.ChapterTask, error) {
-	s.logger.Info("Got novel message", zap.String("name", novelPageMsg.Name))
+	zap.L().Info("Got novel message", zap.String("name", novelPageMsg.Name))
+	siteCfg := base.GetSiteConfig(base.SiteOneJ)
+	if siteCfg == nil {
+		return nil, errors.New("no site config found for site " + base.SiteOneJ)
+	}
 
-	if picDir, ok := s.siteCfg.Attributes[directory]; ok {
+	if picDir, ok := siteCfg.Attributes[directory]; ok {
 		//获取catalog name
 		catalogName, err := utils.GetAndSet(ctx, novelPageMsg.CatalogId.String(), func() (*string, error) {
 			catlogCol := system.GetSystem().GetCollection(base.CollectionCatalog)
@@ -150,10 +137,10 @@ func (s *SiteOnej) CrawlNovelPage(ctx context.Context, novelPageMsg *entity.Nove
 			}
 
 			if _, err := restyClient.R().SetOutput(localFile).Get(imgUrlString); err != nil {
-				s.logger.Error("download image error", zap.String("url", imgUrlString), zap.Error(err))
+				zap.L().Error("download image error", zap.String("url", imgUrlString), zap.Error(err))
 				return nil, err
 			} else {
-				s.logger.Info("image downloaded", zap.String("url", imgUrlString), zap.String("localFile", localFile))
+				zap.L().Info("image downloaded", zap.String("url", imgUrlString), zap.String("localFile", localFile))
 			}
 		}
 
@@ -169,10 +156,10 @@ func (s *SiteOnej) CrawlNovelPage(ctx context.Context, novelPageMsg *entity.Nove
 			attFile := strings.TrimRight(destDir, "/") + "/" + attachUrlString[lastSlashIndex+1:]
 			attFile = strings.ReplaceAll(attFile, "onejav.com_", "")
 			if _, err := restyAttClient.R().SetOutput(attFile).Get(attachUrlString); err != nil {
-				s.logger.Error("download attachment error", zap.String("url", attachUrlString), zap.Error(err))
+				zap.L().Error("download attachment error", zap.String("url", attachUrlString), zap.Error(err))
 				return nil, err
 			} else {
-				s.logger.Info("attachment downloaded", zap.String("url", attachUrlString), zap.String("localFile", attFile))
+				zap.L().Info("attachment downloaded", zap.String("url", attachUrlString), zap.String("localFile", attFile))
 			}
 		}
 	}

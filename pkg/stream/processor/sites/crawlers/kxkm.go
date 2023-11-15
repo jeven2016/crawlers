@@ -6,15 +6,13 @@ import (
 	"crawlers/pkg/dao"
 	"crawlers/pkg/metrics"
 	"crawlers/pkg/model/entity"
+	"errors"
 	"fmt"
 	"github.com/duke-git/lancet/v2/fileutil"
 	"github.com/go-creed/sat"
 	"github.com/go-resty/resty/v2"
 	"github.com/gocolly/colly/v2"
-	"github.com/jeven2016/mylibs/cache"
 	"github.com/jeven2016/mylibs/client"
-	"github.com/jeven2016/mylibs/db"
-	"github.com/jeven2016/mylibs/system"
 	"github.com/jeven2016/mylibs/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
@@ -25,32 +23,18 @@ import (
 )
 
 type kxkmCrawler struct {
-	redis       *cache.Redis
-	mongoClient *db.Mongo
 	colly       *colly.Collector
-	siteCfg     *base.SiteConfig
-	client      *resty.Client
 	zhConvertor sat.Dicter
 }
 
 func NewKxkmCrawler() *kxkmCrawler {
-	sys := system.GetSystem()
-	cfg := base.GetSiteConfig(base.Cartoon18)
-	if cfg == nil {
-		zap.L().Sugar().Warn("Could not find site config", zap.String("siteName", base.SiteNsf))
-	}
-
 	collyClient, err := client.NewCollector("", 3)
 	if err != nil {
 		zap.L().Warn("Could not create collector", zap.Error(err))
 	}
 
 	return &kxkmCrawler{
-		redis:       sys.RedisClient,
-		mongoClient: sys.MongoClient,
 		colly:       collyClient,
-		siteCfg:     cfg,
-		client:      resty.New(),
 		zhConvertor: sat.DefaultDict(),
 	}
 }
@@ -86,6 +70,11 @@ func (c kxkmCrawler) CrawlNovelPage(ctx context.Context, novelTask *entity.Novel
 	var novel = entity.Novel{Attributes: make(map[string]interface{}), CreatedTime: &createdTime}
 	var chpTasks []entity.ChapterTask
 	var novelFolder string
+
+	siteCfg := base.GetSiteConfig(base.Kxkm)
+	if siteCfg == nil {
+		return nil, errors.New("no site config found for site " + base.Kxkm)
+	}
 
 	cly := c.colly.Clone()
 	//获取名称
@@ -147,7 +136,7 @@ func (c kxkmCrawler) CrawlNovelPage(ctx context.Context, novelTask *entity.Novel
 	}
 
 	//create directory
-	if novelDir, ok := c.siteCfg.Attributes["directory"]; ok {
+	if novelDir, ok := siteCfg.Attributes["directory"]; ok {
 		novelFolder = filepath.Join(novelDir, novel.Name)
 
 		if fileutil.IsExist(novelFolder) {
@@ -184,6 +173,11 @@ func (c kxkmCrawler) CrawlChapterPage(ctx context.Context, chapterTask *entity.C
 	var restyClient *resty.Client
 	var novel *entity.Novel
 
+	siteCfg := base.GetSiteConfig(base.Kxkm)
+	if siteCfg == nil {
+		return errors.New("no site config found for site " + base.Kxkm)
+	}
+
 	cly := c.colly.Clone()
 	zap.L().Info("[kxkm] Got chapter message", zap.String("url", chapterTask.Url))
 
@@ -193,7 +187,7 @@ func (c kxkmCrawler) CrawlChapterPage(ctx context.Context, chapterTask *entity.C
 
 	//以novel名称为根目录，chapter目录为子目录
 	var chapterDir string
-	if novelDir, ok := c.siteCfg.Attributes["directory"]; ok {
+	if novelDir, ok := siteCfg.Attributes["directory"]; ok {
 		chapterDir = filepath.Join(novelDir, novel.Name, chapterTask.Name)
 		if err = os.MkdirAll(chapterDir, 0755); err != nil {
 			return err
@@ -201,7 +195,7 @@ func (c kxkmCrawler) CrawlChapterPage(ctx context.Context, chapterTask *entity.C
 	}
 
 	if chapterDir == "" {
-		return fmt.Errorf("no chapter directory specified %v", c.siteCfg.Attributes["directory"])
+		return fmt.Errorf("no chapter directory specified %v", siteCfg.Attributes["directory"])
 	}
 
 	var fileFormat string

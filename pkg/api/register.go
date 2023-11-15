@@ -2,20 +2,38 @@ package api
 
 import (
 	_ "crawlers/docs"
+	"embed"
+	"encoding/json"
+	ginI18n "github.com/gin-contrib/i18n"
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/zap"
+	"golang.org/x/text/language"
 	"net/http"
 	"time"
 )
 
 // RegisterEndpoints register all web endpoints
-func RegisterEndpoints() *gin.Engine {
+func RegisterEndpoints(i18nFs embed.FS) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	var engine = gin.Default()
+
+	// apply i18n middleware
+	engine.Use(ginI18n.Localize(ginI18n.WithBundle(&ginI18n.BundleCfg{
+		DefaultLanguage:  language.Chinese,
+		FormatBundleFile: "json",
+		AcceptLanguage:   []language.Tag{language.Chinese},
+		RootPath:         "./pkg/i18n/",
+		UnmarshalFunc:    json.Unmarshal,
+
+		//get resource from embedded bundle file
+		Loader: &ginI18n.EmbedLoader{
+			FS: i18nFs,
+		},
+	})))
 
 	// Add a ginzap middleware, which:
 	//   - Logs all requests, like a combined access and error log.
@@ -41,7 +59,7 @@ func RegisterEndpoints() *gin.Engine {
 	engine.POST("/sites", siteHandler.CreateSite)
 	engine.POST("/tasks/catalog-pages", hd.HandleCatalogPage)
 	engine.POST("/tasks/novels", hd.HandleNovelPage)
-	engine.POST("/tasks/schedule-task", hd.RunScheduleTask)
+	//engine.POST("/tasks/schedule-task", hd.RunScheduleTask)
 
 	return engine
 }

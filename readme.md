@@ -1,9 +1,10 @@
-
 ### install
+
 ```shell
 go get github.com/gocolly/colly/v2 latest
 msgp 序列化
 ```
+
 //参考的框架
 https://blog.csdn.net/weixin_41853064/article/details/134284378
 
@@ -18,6 +19,7 @@ CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build main.go
 ``
 
 ### Build by taskfile
+
 Using taskfile to build
 
 ```shell
@@ -32,6 +34,7 @@ task -version
 ```
 
 ### swagger
+
 ```text
 参数说明 ：@Param 参数名 位置（query / path / body / header） 类型 是否必需 注释
 
@@ -49,5 +52,28 @@ task -version
 ```
 
 libs
+
 * github.com/go-co-op/gocron
 * chromedp(浏览器抓取)
+
+## Tools
+
+### mbc
+
++ build an executable file for windows (win7 latter)
+
+```shell
+task build_mbc
+```
+
++ move cover images to destination folders
+
+```shell
+mbc.exe -s "d:\source\" -d "e:\destination" -o
+```
+
++ move cover images from root folder(which has subdirectories)
+
+```shell
+mbc.exe -S "d:\topSource" -D "e:\topDest" -o 
+```

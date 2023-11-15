@@ -7,12 +7,8 @@ import (
 	"crawlers/pkg/model/entity"
 	"github.com/chromedp/chromedp"
 	"github.com/go-creed/sat"
-	"github.com/go-resty/resty/v2"
 	"github.com/gocolly/colly/v2"
-	"github.com/jeven2016/mylibs/cache"
 	"github.com/jeven2016/mylibs/client"
-	"github.com/jeven2016/mylibs/db"
-	"github.com/jeven2016/mylibs/system"
 	"github.com/jeven2016/mylibs/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
@@ -21,32 +17,22 @@ import (
 )
 
 type NsfCrawler struct {
-	redis       *cache.Redis
-	mongoClient *db.Mongo
-	colly       *colly.Collector
-	siteCfg     *base.SiteConfig
-	client      *resty.Client
+	//redis       *cache.Redis
+	//mongoClient *db.Mongo
+	colly *colly.Collector
+	//siteCfg     *base.SiteConfig
+	//client      *resty.Client
 	zhConvertor sat.Dicter
 }
 
 func NewNsfCrawler() *NsfCrawler {
-	sys := system.GetSystem()
-	cfg := base.GetSiteConfig(base.SiteNsf)
-	if cfg == nil {
-		zap.L().Sugar().Warn("Could not find site config", zap.String("siteName", base.SiteNsf))
-	}
-
 	collyClient, err := client.NewCollector("", 3)
 	if err != nil {
 		zap.L().Warn("Could not create collector", zap.Error(err))
 	}
 
 	return &NsfCrawler{
-		redis:       sys.RedisClient,
-		mongoClient: sys.MongoClient,
 		colly:       collyClient,
-		siteCfg:     cfg,
-		client:      resty.New(),
 		zhConvertor: sat.DefaultDict(),
 	}
 }

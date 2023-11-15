@@ -31,6 +31,11 @@ tasks:
     cmds:
       - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -ldflags="-s -w" -o bin/crawlers  main.go
 
+  build_mbc:
+    desc: build mbc tool
+    cmds:
+      - CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -v -ldflags="-s -w" -o bin/mbc.exe  cmd/mbc/move_bt_cover.go
+
   clean:
     cmds:
       - rm -rf bin/crawlers

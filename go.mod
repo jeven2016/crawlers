@@ -5,13 +5,14 @@ go 1.21
 require (
 	github.com/chromedp/chromedp v0.9.3
 	github.com/duke-git/lancet/v2 v2.2.7
+	github.com/gin-contrib/i18n v1.0.0
 	github.com/gin-contrib/zap v0.2.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-co-op/gocron v1.35.3
 	github.com/go-creed/sat v1.0.3
 	github.com/go-resty/resty/v2 v2.10.0
 	github.com/gocolly/colly/v2 v2.1.0
-	github.com/jeven2016/mylibs v0.1.5
+	github.com/jeven2016/mylibs v0.1.6
 	github.com/prometheus/client_golang v1.17.0
 	github.com/redis/go-redis/v9 v9.3.0
 	github.com/reugn/go-streams v0.9.0
@@ -21,6 +22,7 @@ require (
 	github.com/swaggo/swag v1.16.2
 	go.mongodb.org/mongo-driver v1.13.0
 	go.uber.org/zap v1.26.0
+	golang.org/x/text v0.13.0
 )
 
 require (
@@ -81,6 +83,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe // indirect
 	github.com/natefinch/lumberjack v2.0.0+incompatible // indirect
+	github.com/nicksnyder/go-i18n/v2 v2.2.2 // indirect
 	github.com/panjf2000/ants/v2 v2.8.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
 	github.com/prometheus/client_model v0.4.1-0.20230718164431-9a2bf3000d16 // indirect
@@ -104,7 +107,6 @@ require (
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/tools v0.7.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect

@@ -5,7 +5,8 @@ import (
 	"crawlers/pkg/api"
 	"crawlers/pkg/base"
 	"crawlers/pkg/dao"
-	"crawlers/pkg/processor"
+	"crawlers/pkg/stream"
+	"embed"
 	_ "embed"
 	"errors"
 	"fmt"
@@ -19,6 +20,9 @@ import (
 
 //go:embed config/internal_conf.yaml
 var configFile string
+
+//go:embed pkg/i18n/*
+var localeFs embed.FS
 
 const softwareVersion = "0.1"
 const flagName = "config"
@@ -60,13 +64,12 @@ func run() {
 				//ensure the indexes are created
 				dao.EnsureMongoIndexes(ctx)
 
-				processor.RegisterProcessors()
-
-				//if err := stream.LaunchGlobalSiteStream(ctx); err != nil {
-				//	zap.L().Error("failed to register streams", zap.Error(err))
-				//	cancelFunc()
-				//	return
-				//}
+				//global streams
+				if err := stream.LaunchGlobalSiteStream(ctx); err != nil {
+					zap.L().Error("failed to register streams", zap.Error(err))
+					cancelFunc()
+					return
+				}
 
 				// run as a web server
 				if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -86,7 +89,7 @@ func run() {
 
 // create a http server
 func createServer(cfg *base.ServerConfig, server *http.Server) *http.Server {
-	engine := api.RegisterEndpoints()
+	engine := api.RegisterEndpoints(localeFs)
 	bindAddr := fmt.Sprintf("%v:%v", cfg.Http.Address, cfg.Http.Port)
 	zap.L().Sugar().Info("server listens on ", bindAddr)
 	server = &http.Server{Addr: bindAddr, Handler: engine}

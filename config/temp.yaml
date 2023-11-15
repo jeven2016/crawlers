@@ -3,6 +3,7 @@ http:
   port: 8080
 
 
+## end in page 40
 crawlerSettings:
   catalogPageTaskParallelism: 1
   novelTaskParallelism: 2
@@ -33,4 +34,30 @@ crawlerSettings:
     - https://kxkmh.top/manga/1815
     - https://kxkmh.top/manga/1154
     - https://kxkmh.top/manga/1856
+    - https://kxkmh.top/manga/286
+    - https://kxkmh.top/manga/1731
+    - https://kxkmh.top/manga/1174
+    - https://kxkmh.top/manga/1105
+    - https://kxkmh.top/manga/1179
+    - https://kxkmh.top/manga/1685
+    - https://kxkmh.top/manga/1045
+    - https://kxkmh.top/manga/1069
+    - https://kxkmh.top/manga/1506
+    - https://kxkmh.top/manga/1327
+    - https://kxkmh.top/manga/1106
+    - https://kxkmh.top/manga/118
+    - https://kxkmh.top/manga/732
+    - https://kxkmh.top/manga/1623
+    - https://kxkmh.top/manga/1115
+    - https://kxkmh.top/manga/186
+    - https://kxkmh.top/manga/659
+    - https://kxkmh.top/manga/1062
+    - https://kxkmh.top/manga/1068
+    - https://kxkmh.top/manga/718
+    - https://kxkmh.top/manga/1869
+    - https://kxkmh.top/manga/1063
+    - https://kxkmh.top/manga/1089
+    - https://kxkmh.top/manga/603
+    - https://kxkmh.top/manga/988
+    - https://kxkmh.top/manga/593
 #    - https://github.com/

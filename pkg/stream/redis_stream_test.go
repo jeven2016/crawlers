@@ -4,10 +4,16 @@ import (
 	"context"
 	"fmt"
 	"github.com/redis/go-redis/v9"
+	"github.com/reugn/go-streams/flow"
 	"log"
+	"math/rand"
 	"strconv"
+	"strings"
+	"sync"
 	"testing"
 	"time"
+
+	ext "github.com/reugn/go-streams/extension"
 )
 
 const redisStream = "sourceStream"
@@ -150,4 +156,29 @@ func getClient() (client *redis.Client) {
 		log.Fatal("Unable to connect to Redis", err)
 	}
 	return client
+}
+
+func TestStreamFlatMap(t *testing.T) {
+	channel := make(chan interface{})
+	source := ext.NewChanSource(channel)
+	sink := ext.NewStdoutSink()
+
+	group := sync.WaitGroup{}
+	group.Add(1)
+	go func() {
+		source.
+			Via(flow.NewFlatMap(func(t string) []string {
+				return strings.Split(t, "")
+			}, 1)).
+			To(sink)
+	}()
+
+	go func() {
+		channel <- strconv.Itoa(rand.Int())
+		time.Sleep(time.Second * 1)
+		channel <- strconv.Itoa(rand.Int())
+		time.Sleep(time.Second * 1)
+		group.Done()
+	}()
+	group.Wait()
 }

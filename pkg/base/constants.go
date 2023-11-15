@@ -9,6 +9,7 @@ const (
 	SiteNsf            = "nsf"
 	Cartoon18          = "cartoon18"
 	Kxkm               = "kxkm"
+	Wucomic            = "wucomic"
 
 	CollyMaxRetries = 3
 

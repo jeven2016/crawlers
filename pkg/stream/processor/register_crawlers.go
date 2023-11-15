@@ -4,10 +4,10 @@ import (
 	"context"
 	"crawlers/pkg/base"
 	"crawlers/pkg/model/entity"
-	"crawlers/pkg/processor/sites/cartoon18"
-	"crawlers/pkg/processor/sites/crawlers"
-	"crawlers/pkg/processor/sites/nsf"
-	"crawlers/pkg/processor/sites/onej"
+	"crawlers/pkg/stream/processor/sites/cartoon18"
+	"crawlers/pkg/stream/processor/sites/crawlers"
+	nfs "crawlers/pkg/stream/processor/sites/nsf"
+	"crawlers/pkg/stream/processor/sites/onej"
 	"go.uber.org/zap"
 )
 
@@ -22,11 +22,12 @@ type SiteCrawler interface {
 var siteCrawlerMap = make(map[string]SiteCrawler)
 var siteTaskProcessorMap = make(map[string]TaskProcessor)
 
-func RegisterProcessors() {
-	siteCrawlerMap[base.SiteOneJ] = onej.NewSiteOnej()
-	siteCrawlerMap[base.SiteNsf] = nfs.NewNsfCrawler()
+func init() {
 	siteCrawlerMap[base.Cartoon18] = cartoon18.NewCartoonCrawler()
 	siteCrawlerMap[base.Kxkm] = crawlers.NewKxkmCrawler()
+	siteCrawlerMap[base.Wucomic] = crawlers.NewWucomicCrawler()
+	siteCrawlerMap[base.SiteNsf] = nfs.NewNsfCrawler()
+	siteCrawlerMap[base.SiteOneJ] = onej.NewSiteOnej()
 }
 
 func GetSiteCrawler(siteName string) SiteCrawler {
