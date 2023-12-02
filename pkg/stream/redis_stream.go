@@ -27,7 +27,7 @@ type RedisStreamSource struct {
 
 // NewRedisStreamSource returns a new RedisStreamSource instance
 func NewRedisStreamSource(ctx context.Context, client *cache.Redis, streamName string,
-	consumerGroup string) (*RedisStreamSource, error) {
+	consumerGroup string, chanCapacity int) (*RedisStreamSource, error) {
 	var err error
 	if err = client.EnsureConsumeGroupCreated(ctx, streamName, consumerGroup); err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func NewRedisStreamSource(ctx context.Context, client *cache.Redis, streamName s
 	source := &RedisStreamSource{
 		ctx:           ctx,
 		redisClient:   client,
-		out:           make(chan interface{}),
+		out:           make(chan interface{}, chanCapacity),
 		streamName:    streamName,
 		consumerGroup: consumerGroup,
 	}
@@ -69,10 +69,10 @@ type RedisStreamSink struct {
 }
 
 // NewRedisStreamSink returns a new RedisStreamSink instance
-func NewRedisStreamSink(ctx context.Context, client *cache.Redis, streamName string) *RedisStreamSink {
+func NewRedisStreamSink(ctx context.Context, client *cache.Redis, streamName string, chanCapacity int) *RedisStreamSink {
 	sink := &RedisStreamSink{
 		client,
-		make(chan interface{}),
+		make(chan interface{}, chanCapacity),
 		streamName,
 	}
 

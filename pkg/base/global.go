@@ -1,7 +1,10 @@
 package base
 
+import "context"
+
 var (
 	internalCfg *ServerConfig
+	globalCtx   context.Context
 )
 
 func SetConfig(cfg *ServerConfig) {
@@ -10,4 +13,12 @@ func SetConfig(cfg *ServerConfig) {
 
 func GetConfig() *ServerConfig {
 	return internalCfg
+}
+
+func SetSystemContext(ctx context.Context) {
+	globalCtx = ctx
+}
+
+func GetSystemContext() context.Context {
+	return globalCtx
 }

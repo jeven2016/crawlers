@@ -5,6 +5,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
+var SiteRuningTasksGauge prometheus.Gauge
+
 // https://www.cnblogs.com/YaoDD/p/11391316.html
 var MetricsRuningCatalogPageTasksGauge prometheus.Gauge
 var MetricsRuningNovelTasksGauge prometheus.Gauge
@@ -27,6 +29,11 @@ var MetricsSucceedNovelTasksGauge prometheus.Gauge
 var MetricsSucceedChapterTasksGauge prometheus.Gauge
 
 func init() {
+	//SiteRuningTasksGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	//	Name: "running_tasks_gauge",
+	//	Help: "running tasks gauge metrics",
+	//}, []string{})
+
 	GaugeRuningTasks = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "running_tasks_gauge",
 		Help: "running tasks gauge metrics",

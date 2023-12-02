@@ -50,7 +50,7 @@ func LaunchSiteStream(ctx context.Context, siteName string) error {
 					return err
 				}
 			}
-			zap.S().Infof("some background tasks are launched for site " + siteName)
+			zap.S().Infof("some background tasks are launched for the site " + siteName)
 		}
 	}
 	return nil
@@ -59,29 +59,41 @@ func LaunchSiteStream(ctx context.Context, siteName string) error {
 // 解析page url得到每一个novel的url
 // from: catalogPage stream => novel stream
 func (d DefaultSiteStreamImpl) catalogPageStream(ctx context.Context) error {
-	flowFunction := flow.NewFlatMap(d.pr.HandleCatalogPageTask, uint(base.GetConfig().CrawlerSettings.CatalogPageTaskParallelism))
+	var sourceParallelism = base.GetConfig().CrawlerSettings.CatalogPageTaskParallelism
+	var sinkParallelism = base.GetConfig().CrawlerSettings.NovelTaskParallelism
+	flowFunction := flow.NewFlatMap(d.pr.HandleCatalogPageTask, uint(sourceParallelism))
 	return createStream(ctx, d.params.CatalogPageStreamName, d.params.CatalogPageStreamConsumer,
-		d.params.NovelPageStreamName, flowFunction, false)
+		d.params.NovelPageStreamName, flowFunction, sourceParallelism, sinkParallelism, false)
 }
 
 // 处理每一个novel
 func (d DefaultSiteStreamImpl) novelStream(ctx context.Context) error {
-	flowFunction := flow.NewFlatMap(d.pr.HandleNovelTask, uint(base.GetConfig().CrawlerSettings.NovelTaskParallelism))
+	var sourceParallelism = base.GetConfig().CrawlerSettings.NovelTaskParallelism
+	var sinkParallelism = base.GetConfig().CrawlerSettings.ChapterTaskParallelism
+	flowFunction := flow.NewFlatMap(d.pr.HandleNovelTask, uint(sourceParallelism))
 	return createStream(ctx, d.params.NovelPageStreamName, d.params.NovelPageStreamConsumer,
-		d.params.ChapterPageStreamName, flowFunction, false)
+		d.params.ChapterPageStreamName, flowFunction, sourceParallelism, sinkParallelism, false)
 }
 
 // 处理每一个novel
 func (d DefaultSiteStreamImpl) chapterStream(ctx context.Context) error {
-	flowFunction := flow.NewMap(d.pr.HandleChapterTask, uint(base.GetConfig().CrawlerSettings.ChapterTaskParallelism))
+	var sourceParallelism = base.GetConfig().CrawlerSettings.ChapterTaskParallelism
+	flowFunction := flow.NewMap(d.pr.HandleChapterTask, uint(sourceParallelism))
 	return createStream(ctx, d.params.ChapterPageStreamName, d.params.ChapterPageStreamConsumer,
-		d.params.ChapterPageStreamName, flowFunction, true)
+		d.params.ChapterPageStreamName, flowFunction, sourceParallelism, sourceParallelism, true)
 }
 
 // createStream creates specified stream
-func createStream(ctx context.Context, sourceChanel string, consumerGroup string, sinkChanel string,
-	flatMapFlow streams.Flow, ignoredSink bool) error {
-	source, err := NewRedisStreamSource(ctx, system.GetSystem().RedisClient, sourceChanel, consumerGroup)
+func createStream(
+	ctx context.Context,
+	sourceChanel string,
+	consumerGroup string,
+	sinkChanel string,
+	flatMapFlow streams.Flow,
+	sourceChanCapacity,
+	sinkChanCapacity int,
+	ignoredSink bool) error {
+	source, err := NewRedisStreamSource(ctx, system.GetSystem().RedisClient, sourceChanel, consumerGroup, sourceChanCapacity)
 	if err != nil {
 		return err
 	}
@@ -92,7 +104,7 @@ func createStream(ctx context.Context, sourceChanel string, consumerGroup string
 		if ignoredSink {
 			streamFlow.To(extension.NewIgnoreSink())
 		} else {
-			sink := NewRedisStreamSink(ctx, system.GetSystem().RedisClient, sinkChanel)
+			sink := NewRedisStreamSink(ctx, system.GetSystem().RedisClient, sinkChanel, sinkChanCapacity)
 			streamFlow.To(sink)
 		}
 	})

@@ -12,7 +12,7 @@ require (
 	github.com/go-creed/sat v1.0.3
 	github.com/go-resty/resty/v2 v2.10.0
 	github.com/gocolly/colly/v2 v2.1.0
-	github.com/jeven2016/mylibs v0.1.6
+	github.com/jeven2016/mylibs v0.1.7
 	github.com/prometheus/client_golang v1.17.0
 	github.com/redis/go-redis/v9 v9.3.0
 	github.com/reugn/go-streams v0.9.0
@@ -42,6 +42,7 @@ require (
 	github.com/chromedp/cdproto v0.0.0-20231011050154-1d073bb38998 // indirect
 	github.com/chromedp/sysutil v1.0.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
+	github.com/fatih/structs v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect

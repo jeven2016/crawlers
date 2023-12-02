@@ -59,6 +59,8 @@ func run() {
 
 			//global context
 			ctx, cancelFunc := context.WithCancel(context.Background())
+			base.SetSystemContext(ctx)
+
 			sys := systemInit(cfg, cancelFunc, server, ctx)
 			if sys != nil {
 				//ensure the indexes are created
@@ -67,7 +69,7 @@ func run() {
 				//global streams
 				if err := stream.LaunchGlobalSiteStream(ctx); err != nil {
 					zap.L().Error("failed to register streams", zap.Error(err))
-					cancelFunc()
+					system.Stop(ctx)
 					return
 				}
 
@@ -104,7 +106,7 @@ func systemInit(cfg *base.ServerConfig, cancelFunc context.CancelFunc, server *h
 		EnableRedis:   true,
 		Config:        cfg.GetServerConfig(),
 		PreShutdown: func() error {
-			cancelFunc()
+			//cancelFunc()
 			return nil
 		},
 		PostShutdown: func() error {

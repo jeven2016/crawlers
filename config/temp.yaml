@@ -3,7 +3,7 @@ http:
   port: 8080
 
 
-## end in page 40
+## ends in page 60
 crawlerSettings:
   catalogPageTaskParallelism: 1
   novelTaskParallelism: 2
@@ -60,4 +60,76 @@ crawlerSettings:
     - https://kxkmh.top/manga/603
     - https://kxkmh.top/manga/988
     - https://kxkmh.top/manga/593
+    - https://kxkmh.top/manga/1061
+    - https://kxkmh.top/manga/1072
+    - https://kxkmh.top/manga/1050
+    - https://kxkmh.top/manga/1398
+    - https://kxkmh.top/manga/1057
+    - https://kxkmh.top/manga/1896
+    - https://kxkmh.top/manga/230
+    - https://kxkmh.top/manga/1070
+    - https://kxkmh.top/manga/1173
+    - https://kxkmh.top/manga/660
+    - https://kxkmh.top/manga/1282
+    - https://kxkmh.top/manga/1722
+    - https://kxkmh.top/manga/641
+    - https://kxkmh.top/manga/1033
+    - https://kxkmh.top/manga/594
+    - https://kxkmh.top/manga/901
+    - https://kxkmh.top/manga/1286
+    - https://kxkmh.top/manga/762
+    - https://kxkmh.top/manga/1309
+    - https://kxkmh.top/manga/1180
+    - https://kxkmh.top/manga/1190
+    - https://kxkmh.top/manga/1618
+    - https://kxkmh.top/manga/1039
+    - https://kxkmh.top/manga/1639
+    - https://kxkmh.top/manga/599
+    - https://kxkmh.top/manga/1046
+    - https://kxkmh.top/manga/1863
+    - https://kxkmh.top/manga/1110
+    - https://kxkmh.top/manga/1540
+    - https://kxkmh.top/manga/1588
+    - https://kxkmh.top/manga/1047
+    - https://kxkmh.top/manga/1177
+    - https://kxkmh.top/manga/1074
+    - https://kxkmh.top/manga/668
+    - https://kxkmh.top/manga/597
+    - https://kxkmh.top/manga/1176
+    - https://kxkmh.top/manga/1194
+    - https://kxkmh.top/manga/1172
+    - https://kxkmh.top/manga/1429
+    - https://kxkmh.top/manga/1701
+    - https://kxkmh.top/manga/1094
+    - https://kxkmh.top/manga/517
+    - https://kxkmh.top/manga/589
+    - https://kxkmh.top/manga/1776
+    - https://kxkmh.top/manga/1113
+    - https://kxkmh.top/manga/1095
+    - https://kxkmh.top/manga/1093
+    - https://kxkmh.top/manga/1080
+    - https://kxkmh.top/manga/1797
+    - https://kxkmh.top/manga/1228
+    - https://kxkmh.top/manga/1648
+    - https://kxkmh.top/manga/1310
+    - https://kxkmh.top/manga/1320
+    - https://kxkmh.top/manga/1707
+    - https://kxkmh.top/manga/1697
+    - https://kxkmh.top/manga/1146
+    - https://kxkmh.top/manga/588
+    - https://kxkmh.top/manga/1023
+    - https://kxkmh.top/manga/733
+    - https://kxkmh.top/manga/1137
+    - https://kxkmh.top/manga/1083
+    - https://kxkmh.top/manga/1800
+    - https://kxkmh.top/manga/1611
+    - https://kxkmh.top/manga/1831
+    - https://kxkmh.top/manga/602
+    - https://kxkmh.top/manga/1632
+    - https://kxkmh.top/manga/1666
+    - https://kxkmh.top/manga/1790
+    - https://kxkmh.top/manga/1537
+    - https://kxkmh.top/manga/1692
+    - https://kxkmh.top/manga/1942
+    - https://kxkmh.top/manga/1771
 #    - https://github.com/

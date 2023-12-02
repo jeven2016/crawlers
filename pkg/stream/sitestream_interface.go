@@ -6,9 +6,9 @@ import (
 )
 
 type SiteStreamInterface interface {
-	catalogPageStream(ctx context.Context)
-	novelStream(ctx context.Context)
-	chapterStream(ctx context.Context)
+	catalogPageStream(ctx context.Context) error
+	novelStream(ctx context.Context) error
+	chapterStream(ctx context.Context) error
 }
 
 type StreamStepDefinition[T, R, E, U any] struct {

@@ -3,12 +3,10 @@ version: '3'
 #  includes:
 
 env:
-  DOCKER_ADDR: 192.168.1.21:8082
-  DOCKER_REPO: docker-local
+  DOCKER_REPO: docker-local.home.com
   REPO_USER: admin
-  REPO_PASSWORD: Wzjzzl2015
-
-  CRAWLER_IMAGE: '{{ .DOCKER_ADDR }}/{{ .DOCKER_REPO }}/crawler:{{ .RELEASE_VERSION }}'
+  RELEASE_VERSION: 0.1
+  CRAWLER_IMAGE: '{{ .DOCKER_REPO }}/crawler:{{ .RELEASE_VERSION }}'
 
 tasks:
   docs:
@@ -51,5 +49,5 @@ tasks:
     deps: [ docker ]
     cmds:
 #      - docker tag home.com/crawler repo.home.com/crawler:${docker_version}
-      - docker login $DOCKER_ADDR -u $REPO_USER -p $REPO_PASSWORD
+#      - docker login $DOCKER_ADDR -u $REPO_USER -p $REPO_PASSWORD
       - docker push $CRAWLER_IMAGE

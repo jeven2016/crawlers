@@ -24,7 +24,7 @@ const (
 	ColumId         = "_id"
 	ColumnName      = "name"
 	ColumnCatalogId = "catalogId"
-	ColumnUrl       = "testUrl"
+	ColumnUrl       = "url"
 	ColumnSiteName  = "siteName"
 	ColumnNovelId   = "novelId"
 	ColumnParentId  = "parentId"
