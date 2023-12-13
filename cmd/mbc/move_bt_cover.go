@@ -107,16 +107,6 @@ func movePictures(spd, dpd *string) {
 			continue
 		}
 
-		//delete folder picture by default
-		folderFile := path.Join(*dpd, "folder.jpg")
-		if fileutil.IsExist(folderFile) {
-			if err = os.Remove(folderFile); err != nil {
-				log.Println("remove folder.jpg", err.Error())
-			} else {
-				log.Println("removed folder picture:", folderFile)
-			}
-		}
-
 		// dest file name without extension
 		dstPureName := strings.ReplaceAll(strings.ReplaceAll(dstFileEntry.Name(), "-", ""), dstExt, "")
 		originDstPicName := strings.ReplaceAll(dstFileEntry.Name(), dstExt, "")
@@ -169,5 +159,15 @@ func movePictures(spd, dpd *string) {
 			log.Fatal(err)
 		}
 		sourceFiles = slices.Delete(sourceFiles, sourceIndex, sourceIndex+1)
+
+		//delete folder picture by default
+		folderFile := path.Join(*dpd, "folder.jpg")
+		if fileutil.IsExist(folderFile) {
+			if err = os.Remove(folderFile); err != nil {
+				log.Println("remove folder.jpg", err.Error())
+			} else {
+				log.Println("removed folder picture:", folderFile)
+			}
+		}
 	}
 }
