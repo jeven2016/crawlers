@@ -1,0 +1,42 @@
+
+
+### create a site
+POST http://localhost:8080/sites
+content-type: application/json
+
+{
+  "name": "aipic",
+  "displayName": "aipic AI图片",
+  "crawlerType": 2
+}
+
+
+### Create a catalog
+POST http://localhost:8080/catalogs
+content-type: application/json
+
+{
+  "siteId": "65e1df4accdad220450be4dd",
+  "name": "AI",
+  "url": "https://www.cool18.com/bbs7/index.php?action=search&act=threadsearch&app=forum&type=%E5%9B%BE%E8%B5%8F&submit=%E6%9F%A5%E8%AF%A2&p=1"
+}
+
+
+### submit a task running for catalog page
+POST http://localhost:8080/tasks/catalog-pages
+Content-Type: application/json
+
+{
+  "catalogId": "65e1df9eccdad220450be4de",
+  "url": "https://www.cool18.com/bbs7/index.php?action=search&act=threadsearch&app=forum&type=%E5%9B%BE%E8%B5%8F&submit=%E6%9F%A5%E8%AF%A2&p=2"
+}
+
+
+### submit a novel task
+POST http://localhost:8080/tasks/novels
+Content-Type: application/json
+
+{
+  "catalogId": "65e1df9eccdad220450be4de",
+  "url": "https://www.cool18.com/bbs7/index.php?app=forum&act=threadview&tid=85633"
+}

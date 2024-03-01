@@ -4,6 +4,7 @@ import (
 	"context"
 	"crawlers/pkg/base"
 	"crawlers/pkg/model/entity"
+	"crawlers/pkg/stream/processor/sites/aipic"
 	"crawlers/pkg/stream/processor/sites/cartoon18"
 	"crawlers/pkg/stream/processor/sites/crawlers"
 	nfs "crawlers/pkg/stream/processor/sites/nsf"
@@ -28,6 +29,7 @@ func init() {
 	siteCrawlerMap[base.Wucomic] = crawlers.NewWucomicCrawler()
 	siteCrawlerMap[base.SiteNsf] = nfs.NewNsfCrawler()
 	siteCrawlerMap[base.SiteOneJ] = onej.NewSiteOnej()
+	siteCrawlerMap[base.Aipic] = aipic.NewCartoonCrawler()
 }
 
 func GetSiteCrawler(siteName string) SiteCrawler {

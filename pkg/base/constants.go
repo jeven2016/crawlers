@@ -10,6 +10,7 @@ const (
 	Cartoon18          = "cartoon18"
 	Kxkm               = "kxkm"
 	Wucomic            = "wucomic"
+	Aipic              = "aipic"
 
 	CollyMaxRetries = 3
 

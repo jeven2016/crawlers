@@ -7,7 +7,7 @@ http:
 
 
 redis:
-  address: localhost:6379
+  address: 192.168.1.66:32379
   password: db_pwd
   defaultDb: 0
   poolSize: 10
@@ -17,8 +17,9 @@ redis:
   autoCreateConsumerGroups: true
 
 mongodb:
-  uri: "mongodb://db_user:db_pwd@127.0.0.1:27017/crawlers?retryWrites=true&w=majority&authSource=admin&maxPoolSize=10"
-  database: crawler
+  uri: "mongodb://db_user:db_pwd@192.168.1.66:32017/crawlers?retryWrites=true&w=majority&authenticationDatabase=admin&maxPoolSize=10"
+#  uri: "mongodb://db_user:db_pwd@192.168.1.66:32017/crawlers?retryWrites=true&w=majority&authSource=admin&maxPoolSize=10"
+  database: crawlers
 #  uri: "mongodb://root:1@192.168.1.11:30472/crawler?retryWrites=true&w=majority&authSource=admin&maxPoolSize=10"
 #  database: crawlers
 
@@ -163,5 +164,26 @@ webSites:
         skipSaveIfPresent: true
       chapter:
         enabled: true
+        skipIfPresent: false
+        skipSaveIfPresent: true
+
+  - name: aipic
+    regexSettings:
+      #拼装每一页url
+      parsePageRegex: \\&p=([^\&]+)
+      pagePrefix: "p="
+    mongoCollections:
+      novel: novel
+      catalogPage: catalogPage
+    attributes:
+      directory: /root/Desktop/aipic
+    crawlerSettings:
+      catalog:
+        skipIfPresent: false
+        skipSaveIfPresent: true
+      catalogPage:
+        skipIfPresent: false
+        skipSaveIfPresent: true
+      novel:
         skipIfPresent: false
         skipSaveIfPresent: true
