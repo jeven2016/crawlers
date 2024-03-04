@@ -187,3 +187,14 @@ webSites:
       novel:
         skipIfPresent: false
         skipSaveIfPresent: true
+
+  - name: mp3music
+    mongoCollections:
+      novel: mp3music
+      catalogPage: catalogPage
+    attributes:
+      directory: /root/Desktop/mp3music
+    crawlerSettings:
+      novel:
+        skipIfPresent: true
+        skipSaveIfPresent: true

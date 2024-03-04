@@ -64,9 +64,10 @@ const (
 type CrawlerType int
 
 const (
-	BtCrawlerType = iota + 1
-	ComicCrawlerType
-	NovelCrawlerType
+	BtCrawlerType    = iota + 1
+	ComicCrawlerType //comic
+	NovelCrawlerType //novel
+	MusicCrawlerType //music
 )
 
 // cache key prefix

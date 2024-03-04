@@ -1,0 +1,32 @@
+
+
+### create a site
+POST http://localhost:8080/sites
+content-type: application/json
+
+{
+  "name": "MyFreeMp3",
+  "displayName": "MyFreeMp3",
+  "crawlerType": 4
+}
+
+
+### Create a catalog
+POST http://localhost:8080/catalogs
+content-type: application/json
+
+{
+  "siteId": "65e55494573407acf0ed004a",
+  "name": "Music",
+  "url": "https://tools.liumingye.cn/music/#/explore/artist"
+}
+
+
+### submit a novel task
+POST http://localhost:8080/tasks/novels
+Content-Type: application/json
+
+{
+  "catalogId": "65e554c3573407acf0ed004b",
+  "url": "https://tools.liumingye.cn/music/#/artist/koQX"
+}
