@@ -1,0 +1,40 @@
+### create a site
+POST http://localhost:8080/sites
+content-type: application/json
+
+{
+  "name": "onej",
+  "displayName": " JAV torrent",
+  "crawlerType": 1
+}
+
+
+### Create a catalog
+POST http://localhost:8080/catalogs
+content-type: application/json
+
+{
+  "siteId": "65ed2c8a59521477e4eeadb0",
+  "name": "佐山爱",
+  "url": "https://ffjav.com/torrent/tag/%e4%bd%90%e5%b1%b1%e6%84%9b/page/1"
+}
+
+
+### submit a task running for catalog page
+POST http://localhost:8080/tasks/catalog-pages
+Content-Type: application/json
+
+{
+  "catalogId": "65ed2cba59521477e4eeadb1",
+  "url": "https://ffjav.com/torrent/tag/%e4%bd%90%e5%b1%b1%e6%84%9b/page/14"
+}
+
+
+### submit a novel task
+POST http://localhost:8080/tasks/novels
+Content-Type: application/json
+
+{
+  "catalogId": "65ed2cba59521477e4eeadb1",
+  "url": "https://.com/actress/Fuua%20Kaede?page=89"
+}

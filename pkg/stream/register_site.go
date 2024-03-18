@@ -61,7 +61,7 @@ func LaunchSiteStream(ctx context.Context, siteName string) error {
 func (d DefaultSiteStreamImpl) catalogPageStream(ctx context.Context) error {
 	var sourceParallelism = base.GetConfig().CrawlerSettings.CatalogPageTaskParallelism
 	var sinkParallelism = base.GetConfig().CrawlerSettings.NovelTaskParallelism
-	flowFunction := flow.NewFlatMap(d.pr.HandleCatalogPageTask, uint(sourceParallelism))
+	flowFunction := flow.NewFlatMap(d.pr.HandleCatalogPageTask, sourceParallelism)
 	return createStream(ctx, d.params.CatalogPageStreamName, d.params.CatalogPageStreamConsumer,
 		d.params.NovelPageStreamName, flowFunction, sourceParallelism, sinkParallelism, false)
 }
@@ -70,7 +70,7 @@ func (d DefaultSiteStreamImpl) catalogPageStream(ctx context.Context) error {
 func (d DefaultSiteStreamImpl) novelStream(ctx context.Context) error {
 	var sourceParallelism = base.GetConfig().CrawlerSettings.NovelTaskParallelism
 	var sinkParallelism = base.GetConfig().CrawlerSettings.ChapterTaskParallelism
-	flowFunction := flow.NewFlatMap(d.pr.HandleNovelTask, uint(sourceParallelism))
+	flowFunction := flow.NewFlatMap(d.pr.HandleNovelTask, sourceParallelism)
 	return createStream(ctx, d.params.NovelPageStreamName, d.params.NovelPageStreamConsumer,
 		d.params.ChapterPageStreamName, flowFunction, sourceParallelism, sinkParallelism, false)
 }
@@ -78,7 +78,7 @@ func (d DefaultSiteStreamImpl) novelStream(ctx context.Context) error {
 // 处理每一个novel
 func (d DefaultSiteStreamImpl) chapterStream(ctx context.Context) error {
 	var sourceParallelism = base.GetConfig().CrawlerSettings.ChapterTaskParallelism
-	flowFunction := flow.NewMap(d.pr.HandleChapterTask, uint(sourceParallelism))
+	flowFunction := flow.NewMap(d.pr.HandleChapterTask, sourceParallelism)
 	return createStream(ctx, d.params.ChapterPageStreamName, d.params.ChapterPageStreamConsumer,
 		d.params.ChapterPageStreamName, flowFunction, sourceParallelism, sourceParallelism, true)
 }

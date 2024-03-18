@@ -17,7 +17,7 @@ redis:
   autoCreateConsumerGroups: true
 
 mongodb:
-  uri: "mongodb://db_user:db_pwd@192.168.1.66:32017/crawlers?retryWrites=true&w=majority&authenticationDatabase=admin&maxPoolSize=10"
+  uri: "mongodb://db_user:db_pwd@192.168.1.66:32017/crawlers?retryWrites=true&w=majority&authMechanism=SCRAM-SHA-256&authenticationDatabase=admin&maxPoolSize=10"
 #  uri: "mongodb://db_user:db_pwd@192.168.1.66:32017/crawlers?retryWrites=true&w=majority&authSource=admin&maxPoolSize=10"
   database: crawlers
 #  uri: "mongodb://root:1@192.168.1.11:30472/crawler?retryWrites=true&w=majority&authSource=admin&maxPoolSize=10"
@@ -58,17 +58,40 @@ crawlerSettings:
 #    - https://github.com/
 
 webSites:
+
+#  - name: onej #最高支持catalogPage， catalog为人员名称
+#    regexSettings:
+#      #拼装每一页url
+#      parsePageRegex: page=([^\&]+)
+#      pagePrefix: "page="
+#    mongoCollections:
+#      novel: novel
+#      catalogPage: catalogPage
+#    attributes:
+#      directory: /root/Desktop/backup/onej
+#      consumers: 3
+
   - name: onej #最高支持catalogPage， catalog为人员名称
     regexSettings:
       #拼装每一页url
-      parsePageRegex: page=([^\&]+)
-      pagePrefix: "page="
+      parsePageRegex: page/([^\&]+)
+      pagePrefix: "page/"
     mongoCollections:
       novel: novel
       catalogPage: catalogPage
     attributes:
-      directory: /home/cloud/Desktop/onej/
+      directory: /root/Desktop/backup/fjj
       consumers: 3
+    crawlerSettings:
+      catalog:
+        skipIfPresent: false
+        skipSaveIfPresent: true
+      catalogPage:
+        skipIfPresent: false
+        skipSaveIfPresent: true
+      novel:
+        skipIfPresent: false
+        skipSaveIfPresent: true
 
   - name: nsf
     regexSettings:

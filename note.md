@@ -57,6 +57,8 @@ task -version
 // @Success 200 {object} string	"{"code": 200, "data": [...]}"
 // @Router /getUser/:id [get]
 ```
+swagger url
+http://127.0.0.1:8080/swagger/index.html#/
 
 libs
 

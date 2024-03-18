@@ -127,10 +127,41 @@ func (s *SiteOnej) CrawlNovelPage(ctx context.Context, novelPageMsg *entity.Nove
 		//以catalog name为根目录
 		destDir := picDir + "/" + *catalogName
 
+		var fileName string
+
+		//下载附件
+		if attachmentUrl, ok := novelPageMsg.Attributes[attachmentUriKey]; ok {
+			attachUrlString := attachmentUrl.(string)
+			restyAttClient, err := client.GetRestyClient(attachUrlString, true)
+			if err != nil {
+				return nil, err
+			}
+
+			lastSlashIndex := strings.LastIndex(attachUrlString, "/")
+			attachment := attachUrlString[lastSlashIndex+1:]
+			attachment = strings.ReplaceAll(attachment, "ffjav.com_", "")
+
+			fileName = strings.Split(attachment, ".")[0]
+
+			attFile := strings.TrimRight(destDir, "/") + "/" + attachment
+			if _, err := restyAttClient.R().SetOutput(attFile).Get(attachUrlString); err != nil {
+				zap.L().Error("download attachment error", zap.String("url", attachUrlString), zap.Error(err))
+				return nil, err
+			} else {
+				zap.L().Info("attachment downloaded", zap.String("url", attachUrlString), zap.String("localFile", attFile))
+			}
+		}
+
 		//下载图片
 		if imgUrl, ok := novelPageMsg.Attributes[imgSrcKey]; ok {
+			imageName := fileName
+			if imageName == "" {
+				imageName = novelPageMsg.Name
+			}
+			imageName = strings.ToLower(imageName)
+
 			imgUrlString := imgUrl.(string)
-			localFile := strings.TrimRight(destDir, "/") + "/" + strings.ToLower(novelPageMsg.Name) + ".jpg"
+			localFile := strings.TrimRight(destDir, "/") + "/" + imageName + ".jpg"
 			restyClient, err := client.GetRestyClient(imgUrlString, true)
 			if err != nil {
 				return nil, err
@@ -144,24 +175,6 @@ func (s *SiteOnej) CrawlNovelPage(ctx context.Context, novelPageMsg *entity.Nove
 			}
 		}
 
-		//下载附件
-		if attachmentUrl, ok := novelPageMsg.Attributes[attachmentUriKey]; ok {
-			attachUrlString := attachmentUrl.(string)
-			restyAttClient, err := client.GetRestyClient(attachUrlString, true)
-			if err != nil {
-				return nil, err
-			}
-
-			lastSlashIndex := strings.LastIndex(attachUrlString, "/")
-			attFile := strings.TrimRight(destDir, "/") + "/" + attachUrlString[lastSlashIndex+1:]
-			attFile = strings.ReplaceAll(attFile, "onejav.com_", "")
-			if _, err := restyAttClient.R().SetOutput(attFile).Get(attachUrlString); err != nil {
-				zap.L().Error("download attachment error", zap.String("url", attachUrlString), zap.Error(err))
-				return nil, err
-			} else {
-				zap.L().Info("attachment downloaded", zap.String("url", attachUrlString), zap.String("localFile", attFile))
-			}
-		}
 	}
 
 	return []entity.ChapterTask{}, nil
