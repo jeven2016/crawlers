@@ -1,4 +1,4 @@
-package processor
+package stream
 
 import (
 	"crawlers/pkg/base"

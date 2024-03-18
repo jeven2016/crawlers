@@ -1,14 +1,14 @@
-package processor
+package stream
 
 import (
 	"context"
 	"crawlers/pkg/base"
+	"crawlers/pkg/extension/sites/aipic"
+	"crawlers/pkg/extension/sites/cartoon18"
+	"crawlers/pkg/extension/sites/crawlers"
+	nfs "crawlers/pkg/extension/sites/nsf"
+	"crawlers/pkg/extension/sites/onej"
 	"crawlers/pkg/model/entity"
-	"crawlers/pkg/stream/processor/sites/aipic"
-	"crawlers/pkg/stream/processor/sites/cartoon18"
-	"crawlers/pkg/stream/processor/sites/crawlers"
-	nfs "crawlers/pkg/stream/processor/sites/nsf"
-	"crawlers/pkg/stream/processor/sites/onej"
 	"go.uber.org/zap"
 )
 

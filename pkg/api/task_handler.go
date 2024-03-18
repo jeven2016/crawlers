@@ -5,7 +5,6 @@ import (
 	"crawlers/pkg/dao"
 	"crawlers/pkg/model/entity"
 	"crawlers/pkg/stream"
-	processor2 "crawlers/pkg/stream/processor"
 	"github.com/duke-git/lancet/v2/slice"
 	"github.com/gin-gonic/gin"
 	"github.com/jeven2016/mylibs/system"
@@ -38,7 +37,7 @@ func (h *TaskHandler) HandleCatalogPage(c *gin.Context) {
 		return
 	}
 
-	var sp processor2.TaskProcessor
+	var sp stream.TaskProcessor
 	var site *entity.Site
 	var hasError bool
 	var urls []string
@@ -49,7 +48,7 @@ func (h *TaskHandler) HandleCatalogPage(c *gin.Context) {
 	}
 
 	//if multiple pages need to handle
-	if sp = processor2.GetSiteTaskProcessor(site.Name); sp == nil {
+	if sp = stream.GetSiteTaskProcessor(site.Name); sp == nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, base.Fails(base.ErrCodeUnSupportedCatalog))
 		zap.L().Warn("no processor found for this siteKey", zap.String("siteKey", site.Name))
 		return

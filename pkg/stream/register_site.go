@@ -3,7 +3,6 @@ package stream
 import (
 	"context"
 	"crawlers/pkg/base"
-	"crawlers/pkg/stream/processor"
 	"github.com/jeven2016/mylibs/system"
 	"github.com/reugn/go-streams"
 	"github.com/reugn/go-streams/extension"
@@ -17,7 +16,7 @@ var streamInitLock = sync.Mutex{}
 
 // DefaultSiteStreamImpl Default site stream implementation
 type DefaultSiteStreamImpl struct {
-	pr     processor.TaskProcessor
+	pr     TaskProcessor
 	params *StreamTaskParams
 }
 
@@ -36,7 +35,7 @@ func LaunchSiteStream(ctx context.Context, siteName string) error {
 		if siteStreamMap[siteName] == nil {
 			siteStream := &DefaultSiteStreamImpl{
 				params: GenStreamTaskParams(siteName),
-				pr:     processor.GetSiteTaskProcessor(siteName),
+				pr:     GetSiteTaskProcessor(siteName),
 			}
 
 			funcSlice := []func(ctx2 context.Context) error{
