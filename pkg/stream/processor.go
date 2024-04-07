@@ -360,7 +360,7 @@ func isDuplicatedTask[T any](task *T, collectionName,
 	url string, bsonFilter bson.M) (bool /*existence*/, error /*interrupted*/) {
 
 	jsonString, err := utils.GetAndSet(base.GetSystemContext(), url, func() (*string, error) {
-		data, err := dao.FindByMongoFilter(base.GetSystemContext(),
+		data, err := dao.FindOneByFilter(base.GetSystemContext(),
 			bsonFilter, collectionName, task, &options.FindOneOptions{})
 		if err != nil || data == nil {
 			return nil, err

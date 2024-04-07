@@ -21,7 +21,7 @@ type chapterTaskInterface interface {
 type chapterTaskDaoImpl struct{}
 
 func (c *chapterTaskDaoImpl) FindByUrl(ctx context.Context, url string) (*entity.ChapterTask, error) {
-	task, err := FindByMongoFilter(ctx, bson.M{base.ColumnUrl: url}, base.CollectionChapterTask, &entity.ChapterTask{})
+	task, err := FindOneByFilter(ctx, bson.M{base.ColumnUrl: url}, base.CollectionChapterTask, &entity.ChapterTask{})
 	return task, err
 }
 

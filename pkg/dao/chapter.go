@@ -24,7 +24,7 @@ type chapterInterface interface {
 type chapterDaoImpl struct{}
 
 func (n *chapterDaoImpl) FindByName(ctx context.Context, name string) (*entity.Chapter, error) {
-	chapter, err := FindByMongoFilter(ctx, bson.M{base.ColumnName: name}, base.CollectionChapter, &entity.Chapter{},
+	chapter, err := FindOneByFilter(ctx, bson.M{base.ColumnName: name}, base.CollectionChapter, &entity.Chapter{},
 		&options.FindOneOptions{})
 	if err != nil || chapter == nil {
 		return nil, err
@@ -33,7 +33,7 @@ func (n *chapterDaoImpl) FindByName(ctx context.Context, name string) (*entity.C
 }
 
 func (n *chapterDaoImpl) ExistsByName(ctx context.Context, name string) (bool, error) {
-	task, err := FindByMongoFilter(ctx, bson.M{base.ColumnName: name}, base.CollectionChapter, &entity.Chapter{},
+	task, err := FindOneByFilter(ctx, bson.M{base.ColumnName: name}, base.CollectionChapter, &entity.Chapter{},
 		&options.FindOneOptions{Projection: bson.M{base.ColumId: 1}})
 	return task != nil, err
 }

@@ -10,12 +10,32 @@ import (
 )
 
 type catalogInterface interface {
+	FindCatalogsBySiteId(ctx context.Context, siteId string) ([]entity.Catalog, error)
 	FindById(ctx context.Context, id primitive.ObjectID) (*entity.Catalog, error)
 	ExistsById(ctx context.Context, id primitive.ObjectID) (bool, error)
 	ExistsByName(ctx context.Context, name string) (bool, error)
 }
 
 type catalogDaoImpl struct{}
+
+func (c *catalogDaoImpl) FindCatalogsBySiteId(ctx context.Context, siteId string) ([]entity.Catalog, error) {
+	findOpts := options.Find()
+	//findOpts.SetProjection(bson.M{base.ColumId: 1, base.ColumnName: 1, base.ColumnDisplayName: 1})
+	findOpts.SetLimit(1000)
+
+	objectId, err := primitive.ObjectIDFromHex(siteId)
+	if err != nil {
+		return []entity.Catalog{}, err
+	}
+
+	var catalogs []entity.Catalog
+	err = FindAll(ctx, &catalogs, base.CollectionCatalog, bson.M{base.ColumnsiteId: objectId}, findOpts)
+
+	if catalogs == nil {
+		catalogs = []entity.Catalog{}
+	}
+	return catalogs, err
+}
 
 func (c *catalogDaoImpl) FindById(ctx context.Context, id primitive.ObjectID) (*entity.Catalog, error) {
 	return FindById(ctx, id, base.CollectionCatalog, &entity.Catalog{})
@@ -28,7 +48,7 @@ func (s *catalogDaoImpl) ExistsById(ctx context.Context, id primitive.ObjectID) 
 }
 
 func (s *catalogDaoImpl) ExistsByName(ctx context.Context, name string) (bool, error) {
-	site, err := FindByMongoFilter(ctx, bson.M{base.ColumnName: name}, base.CollectionCatalog, &entity.Site{},
+	site, err := FindOneByFilter(ctx, bson.M{base.ColumnName: name}, base.CollectionCatalog, &entity.Site{},
 		&options.FindOneOptions{Projection: bson.M{base.ColumId: 1}})
 	return site != nil, err
 }

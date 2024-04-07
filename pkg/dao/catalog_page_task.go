@@ -14,6 +14,7 @@ import (
 )
 
 type catalogPageTaskInterface interface {
+	FindTasksByCatalogId(ctx context.Context, catalogId string) ([]entity.CatalogPageTask, error)
 	FindById(ctx context.Context, id primitive.ObjectID) (*entity.CatalogPageTask, error)
 	FindByUrl(ctx context.Context, url string) (*entity.CatalogPageTask, error)
 	ExistsById(ctx context.Context, id primitive.ObjectID) (bool, error)
@@ -23,12 +24,31 @@ type catalogPageTaskInterface interface {
 
 type catalogPageTaskDaoImpl struct{}
 
+func (c *catalogPageTaskDaoImpl) FindTasksByCatalogId(ctx context.Context, catalogId string) ([]entity.CatalogPageTask, error) {
+	findOpts := options.Find()
+	//findOpts.SetProjection(bson.M{base.ColumId: 1, base.ColumnName: 1, base.ColumnDisplayName: 1})
+	findOpts.SetLimit(1000)
+
+	objectId, err := primitive.ObjectIDFromHex(catalogId)
+	if err != nil {
+		return []entity.CatalogPageTask{}, err
+	}
+
+	var tasks []entity.CatalogPageTask
+	err = FindAll(ctx, &tasks, base.CollectionCatalogPageTask, bson.M{base.ColumnCatalogId: objectId}, findOpts)
+
+	if tasks == nil {
+		tasks = []entity.CatalogPageTask{}
+	}
+	return tasks, err
+}
+
 func (c *catalogPageTaskDaoImpl) FindById(ctx context.Context, id primitive.ObjectID) (*entity.CatalogPageTask, error) {
 	return FindById(ctx, id, base.CollectionCatalogPageTask, &entity.CatalogPageTask{})
 }
 
 func (c *catalogPageTaskDaoImpl) FindByUrl(ctx context.Context, url string) (*entity.CatalogPageTask, error) {
-	task, err := FindByMongoFilter(ctx, bson.M{base.ColumnUrl: url}, base.CollectionCatalogPageTask, &entity.CatalogPageTask{})
+	task, err := FindOneByFilter(ctx, bson.M{base.ColumnUrl: url}, base.CollectionCatalogPageTask, &entity.CatalogPageTask{})
 	return task, err
 }
 
@@ -39,7 +59,7 @@ func (s *catalogPageTaskDaoImpl) ExistsById(ctx context.Context, id primitive.Ob
 }
 
 func (s *catalogPageTaskDaoImpl) ExistsByName(ctx context.Context, name string) (bool, error) {
-	task, err := FindByMongoFilter(ctx, bson.M{base.ColumnName: name}, base.CollectionCatalogPageTask, &entity.CatalogPageTask{},
+	task, err := FindOneByFilter(ctx, bson.M{base.ColumnName: name}, base.CollectionCatalogPageTask, &entity.CatalogPageTask{},
 		&options.FindOneOptions{Projection: bson.M{base.ColumId: 1}})
 	return task != nil, err
 }

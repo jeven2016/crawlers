@@ -20,6 +20,35 @@ func NewSiteHandler() *SiteHandler {
 	return &SiteHandler{}
 }
 
+func (h *SiteHandler) FindSites(c *gin.Context) {
+	if sites, err := dao.SiteDao.FindSites(c); err != nil {
+		zap.L().Warn("failed to find sites", zap.Error(err))
+		c.AbortWithStatusJSON(http.StatusInternalServerError,
+			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
+		return
+	} else {
+		c.JSON(http.StatusOK, sites)
+	}
+}
+
+func (h *SiteHandler) GetSiteCatalogs(c *gin.Context) {
+	siteId := c.Param("siteId")
+
+	if siteId == "" {
+		c.AbortWithStatusJSON(http.StatusBadRequest,
+			base.FailsWithParams(base.ErrSiteNotFound, siteId))
+		return
+	}
+	if catalogs, err := dao.CatalogDao.FindCatalogsBySiteId(c, siteId); err != nil {
+		zap.L().Warn("failed to find catalogs", zap.String("siteId", siteId), zap.Error(err))
+		c.AbortWithStatusJSON(http.StatusInternalServerError,
+			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
+		return
+	} else {
+		c.JSON(http.StatusOK, catalogs)
+	}
+}
+
 // CreateSite create a site
 // @Tags 测试
 // @Summary  创建新的可解析的网站

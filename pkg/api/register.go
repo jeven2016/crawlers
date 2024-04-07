@@ -55,6 +55,11 @@ func RegisterEndpoints(i18nFs embed.FS) *gin.Engine {
 	engine.GET("/health", func(c *gin.Context) { c.Status(http.StatusOK) })
 	engine.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
+	engine.GET("/sites", siteHandler.FindSites)
+	engine.GET("/sites/:siteId/catalogs", siteHandler.GetSiteCatalogs)
+	engine.GET("/tasks/catalog-pages", hd.GetTasksOfCatalogPage)
+	engine.GET("/tasks/novels", hd.GetTasksOfNovel)
+
 	engine.POST("/catalogs", siteHandler.CreateCatalog)
 	engine.POST("/sites", siteHandler.CreateSite)
 	engine.POST("/tasks/catalog-pages", hd.HandleCatalogPage)

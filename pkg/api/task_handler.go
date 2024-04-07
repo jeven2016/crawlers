@@ -21,6 +21,49 @@ func NewTaskHandler() *TaskHandler {
 	return &TaskHandler{}
 }
 
+func (h *TaskHandler) checkCatalogId(c *gin.Context) (bool, string) {
+	catalogId := c.Query("catalogId")
+	if catalogId == "" {
+		zap.L().Warn("catalogId is required", zap.String("catalogId", catalogId))
+		c.AbortWithStatusJSON(http.StatusBadRequest,
+			base.FailsWithParams(base.ErrCatalogNotFound, catalogId))
+		return false, ""
+	}
+	return true, catalogId
+}
+
+func (h *TaskHandler) GetTasksOfCatalogPage(c *gin.Context) {
+	var validCatalogId bool
+	var catalogId string
+	if validCatalogId, catalogId = h.checkCatalogId(c); !validCatalogId {
+		return
+	}
+	if catalogs, err := dao.CatalogPageTaskDao.FindTasksByCatalogId(c, catalogId); err != nil {
+		zap.L().Warn("failed to find catalogPage tasks", zap.String("catalogId", catalogId), zap.Error(err))
+		c.AbortWithStatusJSON(http.StatusInternalServerError,
+			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
+		return
+	} else {
+		c.JSON(http.StatusOK, catalogs)
+	}
+}
+
+func (h *TaskHandler) GetTasksOfNovel(c *gin.Context) {
+	var validCatalogId bool
+	var catalogId string
+	if validCatalogId, catalogId = h.checkCatalogId(c); !validCatalogId {
+		return
+	}
+	if catalogs, err := dao.NovelTaskDao.FindByCatalogId(c, catalogId); err != nil {
+		zap.L().Warn("failed to find novel tasks", zap.String("catalogId", catalogId), zap.Error(err))
+		c.AbortWithStatusJSON(http.StatusInternalServerError,
+			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
+		return
+	} else {
+		c.JSON(http.StatusOK, catalogs)
+	}
+}
+
 // HandleCatalogPage handler for catalog page request and to parse the novel links for further processing
 // @Tags 测试
 // @Summary  处理目录页面请求

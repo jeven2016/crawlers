@@ -24,7 +24,7 @@ type novelInterface interface {
 type novelDaoImpl struct{}
 
 func (n *novelDaoImpl) FindById(ctx context.Context, id primitive.ObjectID) (*entity.Novel, error) {
-	novel, err := FindByMongoFilter(ctx, bson.M{base.ColumId: id}, base.CollectionNovel, &entity.Novel{},
+	novel, err := FindOneByFilter(ctx, bson.M{base.ColumId: id}, base.CollectionNovel, &entity.Novel{},
 		&options.FindOneOptions{})
 	if err != nil || novel == nil {
 		return nil, err
@@ -33,7 +33,7 @@ func (n *novelDaoImpl) FindById(ctx context.Context, id primitive.ObjectID) (*en
 }
 
 func (n *novelDaoImpl) FindIdByName(ctx context.Context, name string) (*primitive.ObjectID, error) {
-	novel, err := FindByMongoFilter(ctx, bson.M{base.ColumnName: name}, base.CollectionNovel, &entity.Novel{},
+	novel, err := FindOneByFilter(ctx, bson.M{base.ColumnName: name}, base.CollectionNovel, &entity.Novel{},
 		&options.FindOneOptions{Projection: bson.M{base.ColumId: 1}})
 	if err != nil || novel == nil {
 		return nil, err
@@ -42,7 +42,7 @@ func (n *novelDaoImpl) FindIdByName(ctx context.Context, name string) (*primitiv
 }
 
 func (n *novelDaoImpl) ExistsByName(ctx context.Context, name string) (bool, error) {
-	novel, err := FindByMongoFilter(ctx, bson.M{base.ColumnName: name}, base.CollectionNovel, &entity.Novel{},
+	novel, err := FindOneByFilter(ctx, bson.M{base.ColumnName: name}, base.CollectionNovel, &entity.Novel{},
 		&options.FindOneOptions{Projection: bson.M{base.ColumId: 1}})
 	return novel != nil, err
 }

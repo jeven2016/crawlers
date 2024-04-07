@@ -10,11 +10,22 @@ import (
 )
 
 type siteInterface interface {
+	FindSites(ctx context.Context) ([]entity.Site, error)
 	FindById(ctx context.Context, id primitive.ObjectID) (*entity.Site, error)
 	ExistsById(ctx context.Context, id primitive.ObjectID) (bool, error)
 }
 
 type siteDaoImpl struct{}
+
+func (s *siteDaoImpl) FindSites(ctx context.Context) ([]entity.Site, error) {
+	findOpts := options.Find()
+	//findOpts.SetProjection(bson.M{base.ColumId: 1, base.ColumnName: 1, base.ColumnDisplayName: 1})
+	findOpts.SetLimit(1000)
+
+	var sites []entity.Site
+	err := FindAll(ctx, &sites, base.CollectionSite, bson.D{}, findOpts)
+	return sites, err
+}
 
 func (s *siteDaoImpl) FindById(ctx context.Context, id primitive.ObjectID) (*entity.Site, error) {
 	return FindById(ctx, id, base.CollectionSite, &entity.Site{})

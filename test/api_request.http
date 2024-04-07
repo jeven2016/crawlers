@@ -1,0 +1,14 @@
+
+### List sites
+GET http://localhost:8080/sites
+
+### List catalogs of a site
+GET http://localhost:8080/sites/65ed2c8a59521477e4eeadb0/catalogs
+#GET http://localhost:8080/sites/dd/catalogs
+
+
+### List catalog page taks of a catalog
+GET http://localhost:8080/tasks/catalog-pages?catalogId=65ed2cba59521477e4eeadb1
+
+### List novel taks of a catalog
+GET http://localhost:8080/tasks/novels?catalogId=65ed2cba59521477e4eeadb1

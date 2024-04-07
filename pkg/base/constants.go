@@ -22,14 +22,18 @@ const (
 
 // db column
 const (
-	ColumId         = "_id"
-	ColumnName      = "name"
-	ColumnCatalogId = "catalogId"
-	ColumnUrl       = "url"
-	ColumnSiteName  = "siteName"
-	ColumnNovelId   = "novelId"
-	ColumnParentId  = "parentId"
-	ColumnPageNo    = "page"
+	ColumId           = "_id"
+	ColumnName        = "name"
+	ColumnDisplayName = "displayName"
+	ColumnCatalogId   = "catalogId"
+	ColumnUrl         = "url"
+	ColumnSiteName    = "siteName"
+	ColumnNovelId     = "novelId"
+	ColumnParentId    = "parentId"
+	ColumnPageNo      = "page"
+
+	//for catalog
+	ColumnsiteId = "siteId"
 
 	AttrAuthor = "author"
 )
