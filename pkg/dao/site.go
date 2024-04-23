@@ -13,6 +13,7 @@ type siteInterface interface {
 	FindSites(ctx context.Context) ([]entity.Site, error)
 	FindById(ctx context.Context, id primitive.ObjectID) (*entity.Site, error)
 	ExistsById(ctx context.Context, id primitive.ObjectID) (bool, error)
+	DeleteById(ctx context.Context, id primitive.ObjectID) error
 }
 
 type siteDaoImpl struct{}
@@ -35,4 +36,8 @@ func (s *siteDaoImpl) ExistsById(ctx context.Context, id primitive.ObjectID) (bo
 	site, err := FindById(ctx, id, base.CollectionSite, &entity.Site{},
 		&options.FindOneOptions{Projection: bson.M{base.ColumId: 1}})
 	return site != nil, err
+}
+
+func (s *siteDaoImpl) DeleteById(ctx context.Context, id primitive.ObjectID) error {
+	return DeleteById(ctx, id, base.CollectionSite)
 }

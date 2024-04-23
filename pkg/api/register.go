@@ -51,20 +51,23 @@ func RegisterEndpoints(i18nFs embed.FS) *gin.Engine {
 	//gin-swagger 同时还提供了 DisablingWrapHandler 函数，方便我们通过设置某些环境变量来禁用Swagger。
 	//此时如果将环境变量 NAME_OF_ENV_VARIABLE设置为任意值，则 /swagger/*any 将返回404响应，就像未指定路由时一样
 	//engine.GET("/swagger/*any", ginSwagger.DisablingWrapHandler(swaggerFiles.taskHandler, "NAME_OF_ENV_VARIABLE"))
-	engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	engine.GET("/health", func(c *gin.Context) { c.Status(http.StatusOK) })
-	engine.GET("/metrics", gin.WrapH(promhttp.Handler()))
+	routerGroup := engine.Group("/api/v1")
+	routerGroup.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	routerGroup.GET("/health", func(c *gin.Context) { c.Status(http.StatusOK) })
+	routerGroup.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
-	engine.GET("/sites", siteHandler.FindSites)
-	engine.GET("/sites/:siteId/catalogs", siteHandler.GetSiteCatalogs)
-	engine.GET("/tasks/catalog-pages", hd.GetTasksOfCatalogPage)
-	engine.GET("/tasks/novels", hd.GetTasksOfNovel)
+	routerGroup.GET("/sites", siteHandler.FindSites)
+	routerGroup.GET("/sites/:siteId", siteHandler.FindSiteById)
+	routerGroup.DELETE("/sites/:siteId", siteHandler.DeleteSite)
+	routerGroup.GET("/sites/:siteId/catalogs", siteHandler.GetSiteCatalogs)
+	routerGroup.GET("/tasks/catalog-pages", hd.GetTasksOfCatalogPage)
+	routerGroup.GET("/tasks/novels", hd.GetTasksOfNovel)
 
-	engine.POST("/catalogs", siteHandler.CreateCatalog)
-	engine.POST("/sites", siteHandler.CreateSite)
-	engine.POST("/tasks/catalog-pages", hd.HandleCatalogPage)
-	engine.POST("/tasks/novels", hd.HandleNovelPage)
-	//engine.POST("/tasks/schedule-task", hd.RunScheduleTask)
+	routerGroup.POST("/catalogs", siteHandler.CreateCatalog)
+	routerGroup.POST("/sites", siteHandler.CreateSite)
+	routerGroup.POST("/tasks/catalog-pages", hd.HandleCatalogPage)
+	routerGroup.POST("/tasks/novels", hd.HandleNovelPage)
+	//routerGroup.POST("/tasks/schedule-task", hd.RunScheduleTask)
 
 	return engine
 }

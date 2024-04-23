@@ -10,23 +10,23 @@ content-type: application/json
 
 
 ### Create a catalog
-POST http://localhost:8080/catalogs
+POST http://localhost:8080/api/v1/catalogs
 content-type: application/json
 
 {
   "siteId": "65ed2c8a59521477e4eeadb0",
-  "name": "佐山爱",
-  "url": "https://ffjav.com/torrent/tag/%e4%bd%90%e5%b1%b1%e6%84%9b/page/1"
+  "name": "北野未奈",
+  "url": "https://ffjav.com/torrent/tag/%E5%8C%97%E9%87%8E%E6%9C%AA%E5%A5%88"
 }
 
 
 ### submit a task running for catalog page
-POST http://localhost:8080/tasks/catalog-pages
+POST http://localhost:8080/api/v1/tasks/catalog-pages
 Content-Type: application/json
 
 {
-  "catalogId": "65ed2cba59521477e4eeadb1",
-  "url": "https://ffjav.com/torrent/tag/%e4%bd%90%e5%b1%b1%e6%84%9b/page/14"
+  "catalogId": "661fb9d1460d64048fba4cbc",
+  "url": "https://ffjav.com/torrent/tag/%E5%8C%97%E9%87%8E%E6%9C%AA%E5%A5%88/page/16"
 }
 
 

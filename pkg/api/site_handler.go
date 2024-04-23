@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jeven2016/mylibs/system"
 	"github.com/jeven2016/mylibs/utils"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
 	"net/http"
 	"time"
@@ -76,6 +77,47 @@ func (h *SiteHandler) CreateSite(c *gin.Context) {
 		Collection:    base.CollectionSite,
 		RedisCacheKey: utils.GenKey(base.SiteKeyExistsPrefix, site.Name),
 	})
+}
+
+func (h *SiteHandler) DeleteSite(c *gin.Context) {
+	siteId := c.Param("siteId")
+
+	objectId := h.ensureValidSiteId(c, siteId)
+	if objectId == nil {
+		return
+	}
+	if err := dao.SiteDao.DeleteById(c, *objectId); err != nil {
+		zap.L().Warn("failed to delete site", zap.String("siteId", siteId), zap.Error(err))
+		c.AbortWithStatusJSON(http.StatusInternalServerError,
+			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
+		return
+	}
+	zap.L().Info("site is deleted", zap.String("siteId", siteId))
+	c.Status(http.StatusOK)
+
+}
+
+func (h *SiteHandler) ensureValidSiteId(c *gin.Context, siteId string) *primitive.ObjectID {
+	if siteId == "" {
+		zap.L().Warn("siteId is invalid", zap.String("siteId", siteId))
+		c.AbortWithStatusJSON(http.StatusBadRequest,
+			base.FailsWithParams(base.ErrSiteNotFound, siteId))
+		return nil
+	}
+	objectId, err := primitive.ObjectIDFromHex(siteId)
+	if err != nil {
+		zap.L().Warn("siteId is invalid", zap.String("siteId", siteId), zap.Error(err))
+		c.AbortWithStatusJSON(http.StatusInternalServerError,
+			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
+		return nil
+	}
+	siteExists, err := dao.SiteDao.ExistsById(c, objectId)
+	if !siteExists || err != nil {
+		zap.L().Warn("site does not exist", zap.String("siteId", siteId), zap.Error(err))
+		c.AbortWithStatusJSON(http.StatusBadRequest, base.FailsWithParams(base.ErrSiteNotFound, siteId))
+		return nil
+	}
+	return &objectId
 }
 
 // CreateCatalog create a catalog
@@ -153,5 +195,23 @@ func (h *SiteHandler) doCreate(c *gin.Context, req *dto.CreateRequest) {
 		return
 	} else {
 		c.JSON(http.StatusCreated, obj)
+	}
+}
+
+func (h *SiteHandler) FindSiteById(c *gin.Context) {
+	siteId := c.Param("siteId")
+
+	objectId := h.ensureValidSiteId(c, siteId)
+	if objectId == nil {
+		return
+	}
+
+	if site, err := dao.SiteDao.FindById(c, *objectId); err != nil {
+		zap.L().Warn("failed to find site", zap.String("siteId", siteId), zap.Error(err))
+		c.AbortWithStatusJSON(http.StatusInternalServerError,
+			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
+		return
+	} else {
+		c.JSON(http.StatusOK, site)
 	}
 }
