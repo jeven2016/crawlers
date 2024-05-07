@@ -1,0 +1,9 @@
+{
+  "PARAM_REQUIRED": "参数{{ .name }}不能为空",
+  "PARAM_INVALID": "无效的参数值{{ .name }}",
+  "BAD_REQUEST": "参数检查出错: {{ .error }}",
+  "UNEXPECTED_ERROR": "操作失败: {{.error }}",
+  "UNSUPPORTED_ACTION": "该操作不支持",
+  "NAME_CONFLICTS": "名称冲突",
+  "NOT_FOUND": "资源不存在，请确认后再试"
+}

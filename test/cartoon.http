@@ -33,7 +33,7 @@ Content-Type: application/json
 
 
 ### submit a novel task
-POST http://localhost:8080/tasks/novels
+POST http://localhost:8080/tasks/novels a`
 Content-Type: application/json
 
 {

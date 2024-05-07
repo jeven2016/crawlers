@@ -14,7 +14,7 @@ tasks:
     cmds:
       # 每次执行都要确保GOPATH正常，且接口变动后，执行swag init
       - echo $GOPATH
-      - swag init --g main.go
+      - swag init -g cmd/server/main.go -o ./docs --parseDependency --parseInternal --parseDepth 3
 
   local_docker: #使用本地的可执行文件编译Docker
     desc: locally build a docker image after code compiled
@@ -27,7 +27,7 @@ tasks:
     deps:
       - clean
     cmds:
-      - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -ldflags="-s -w" -o bin/crawlers  main.go
+      - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -ldflags="-s -w" -o bin/crawlers  cmd/server/main.go
 
   build_mbc:
     desc: build mbc tool

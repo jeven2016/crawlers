@@ -21,24 +21,14 @@ func NewTaskHandler() *TaskHandler {
 	return &TaskHandler{}
 }
 
-func (h *TaskHandler) checkCatalogId(c *gin.Context) (bool, string) {
-	catalogId := c.Query("catalogId")
-	if catalogId == "" {
-		zap.L().Warn("catalogId is required", zap.String("catalogId", catalogId))
-		c.AbortWithStatusJSON(http.StatusBadRequest,
-			base.FailsWithParams(base.ErrCatalogNotFound, catalogId))
-		return false, ""
-	}
-	return true, catalogId
-}
-
 func (h *TaskHandler) GetTasksOfCatalogPage(c *gin.Context) {
-	var validCatalogId bool
-	var catalogId string
-	if validCatalogId, catalogId = h.checkCatalogId(c); !validCatalogId {
+	catalogId := c.Query("catalogId")
+	objectId := ensureValidId(c, catalogId)
+
+	if objectId == nil {
 		return
 	}
-	if catalogs, err := dao.CatalogPageTaskDao.FindTasksByCatalogId(c, catalogId); err != nil {
+	if catalogs, err := dao.CatalogPageTaskDao.FindTasksByCatalogId(c, *objectId); err != nil {
 		zap.L().Warn("failed to find catalogPage tasks", zap.String("catalogId", catalogId), zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusInternalServerError,
 			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
@@ -49,12 +39,13 @@ func (h *TaskHandler) GetTasksOfCatalogPage(c *gin.Context) {
 }
 
 func (h *TaskHandler) GetTasksOfNovel(c *gin.Context) {
-	var validCatalogId bool
-	var catalogId string
-	if validCatalogId, catalogId = h.checkCatalogId(c); !validCatalogId {
+	catalogId := c.Query("catalogId")
+	objectId := ensureValidId(c, catalogId)
+
+	if objectId == nil {
 		return
 	}
-	if catalogs, err := dao.NovelTaskDao.FindByCatalogId(c, catalogId); err != nil {
+	if catalogs, err := dao.NovelTaskDao.FindByCatalogId(c, *objectId); err != nil {
 		zap.L().Warn("failed to find novel tasks", zap.String("catalogId", catalogId), zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusInternalServerError,
 			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
@@ -68,8 +59,7 @@ func (h *TaskHandler) GetTasksOfNovel(c *gin.Context) {
 // @Tags 测试
 // @Summary  处理目录页面请求
 // @Description 处理目录页面请求,解析出Novel的地址并发送到消息对列中去
-// @Param   catalogId	body   model.CatalogPageTask   true   "目录ID"
-// @Param   url      	body   model.CatalogPageTask   true   "URL， 格式：http://prefix?page=1, http://prefix?page=1-3"
+// @Param   request 	body    entity.CatalogPageTask   true   "目录ID"
 // @Accept  application/json
 // @Produce application/json
 // @Success 200
@@ -157,8 +147,7 @@ func (h *TaskHandler) getTaskEntity(c *gin.Context, catalogId primitive.ObjectID
 // @Tags 测试
 // @Summary  处理Novel页面请求
 // @Description 处理Novel页面请求,解析出章节的地址并发送到消息对列中去
-// @Param   catalogId	body   model.NovelTask   true   "Novel ID"
-// @Param   url      	body   model.NovelTask   true   "Novel URL， 格式：http://prefix/xx"
+// @Param   request	body   entity.NovelTask   true   "Novel Task"
 // @Accept  application/json
 // @Produce application/json
 // @Success 200

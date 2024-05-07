@@ -36,7 +36,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/entity.Catalog"
+                            "$ref": "#/definitions/crawlers_pkg_model_entity.Catalog"
                         }
                     },
                     {
@@ -45,7 +45,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/entity.Catalog"
+                            "$ref": "#/definitions/crawlers_pkg_model_entity.Catalog"
                         }
                     },
                     {
@@ -54,7 +54,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/entity.Catalog"
+                            "$ref": "#/definitions/crawlers_pkg_model_entity.Catalog"
                         }
                     }
                 ],
@@ -81,20 +81,11 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "description": "目录ID",
-                        "name": "catalogId",
+                        "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.CatalogPageTask"
-                        }
-                    },
-                    {
-                        "description": "URL， 格式：http://prefix?page=1, http://prefix?page=1-3",
-                        "name": "url",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/model.CatalogPageTask"
+                            "$ref": "#/definitions/crawlers_pkg_model_entity.CatalogPageTask"
                         }
                     }
                 ],
@@ -120,21 +111,12 @@ const docTemplate = `{
                 "summary": "处理Novel页面请求",
                 "parameters": [
                     {
-                        "description": "Novel ID",
-                        "name": "catalogId",
+                        "description": "Novel Task",
+                        "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.NovelTask"
-                        }
-                    },
-                    {
-                        "description": "Novel URL， 格式：http://prefix/xx",
-                        "name": "url",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/model.NovelTask"
+                            "$ref": "#/definitions/crawlers_pkg_model_entity.NovelTask"
                         }
                     }
                 ],
@@ -147,7 +129,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "common.TaskStatus": {
+        "crawlers_pkg_base.TaskStatus": {
             "type": "integer",
             "enum": [
                 1,
@@ -164,7 +146,7 @@ const docTemplate = `{
                 "TaskStatusRetryFailed"
             ]
         },
-        "entity.Catalog": {
+        "crawlers_pkg_model_entity.Catalog": {
             "type": "object",
             "required": [
                 "name",
@@ -199,43 +181,7 @@ const docTemplate = `{
                 }
             }
         },
-        "entity.Site": {
-            "type": "object",
-            "required": [
-                "crawlerType",
-                "displayName",
-                "name"
-            ],
-            "properties": {
-                "attributes": {
-                    "type": "object",
-                    "additionalProperties": true
-                },
-                "crawlerType": {
-                    "description": "资源抓取类型",
-                    "type": "integer"
-                },
-                "createdTime": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "displayName": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "updatedTime": {
-                    "type": "string"
-                }
-            }
-        },
-        "model.CatalogPageTask": {
+        "crawlers_pkg_model_entity.CatalogPageTask": {
             "type": "object",
             "required": [
                 "catalogId",
@@ -266,14 +212,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "status": {
-                    "$ref": "#/definitions/common.TaskStatus"
+                    "$ref": "#/definitions/crawlers_pkg_base.TaskStatus"
                 },
                 "url": {
                     "type": "string"
                 }
             }
         },
-        "model.NovelTask": {
+        "crawlers_pkg_model_entity.NovelTask": {
             "type": "object",
             "required": [
                 "catalogId",
@@ -309,9 +255,45 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "status": {
-                    "$ref": "#/definitions/common.TaskStatus"
+                    "$ref": "#/definitions/crawlers_pkg_base.TaskStatus"
                 },
                 "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "crawlers_pkg_model_entity.Site": {
+            "type": "object",
+            "required": [
+                "crawlerType",
+                "displayName",
+                "name"
+            ],
+            "properties": {
+                "attributes": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "crawlerType": {
+                    "description": "资源抓取类型",
+                    "type": "integer"
+                },
+                "createdTime": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "displayName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updatedTime": {
                     "type": "string"
                 }
             }

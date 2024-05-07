@@ -10,7 +10,7 @@ import (
 )
 
 type catalogInterface interface {
-	FindCatalogsBySiteId(ctx context.Context, siteId string) ([]entity.Catalog, error)
+	FindCatalogsBySiteId(ctx context.Context, siteId primitive.ObjectID) ([]entity.Catalog, error)
 	FindById(ctx context.Context, id primitive.ObjectID) (*entity.Catalog, error)
 	ExistsById(ctx context.Context, id primitive.ObjectID) (bool, error)
 	ExistsByName(ctx context.Context, name string) (bool, error)
@@ -18,18 +18,13 @@ type catalogInterface interface {
 
 type catalogDaoImpl struct{}
 
-func (c *catalogDaoImpl) FindCatalogsBySiteId(ctx context.Context, siteId string) ([]entity.Catalog, error) {
+func (c *catalogDaoImpl) FindCatalogsBySiteId(ctx context.Context, siteId primitive.ObjectID) ([]entity.Catalog, error) {
 	findOpts := options.Find()
 	//findOpts.SetProjection(bson.M{base.ColumId: 1, base.ColumnName: 1, base.ColumnDisplayName: 1})
 	findOpts.SetLimit(1000)
 
-	objectId, err := primitive.ObjectIDFromHex(siteId)
-	if err != nil {
-		return []entity.Catalog{}, err
-	}
-
 	var catalogs []entity.Catalog
-	err = FindAll(ctx, &catalogs, base.CollectionCatalog, bson.M{base.ColumnsiteId: objectId}, findOpts)
+	err := FindAll(ctx, &catalogs, base.CollectionCatalog, bson.M{base.ColumnsiteId: siteId}, findOpts)
 
 	if catalogs == nil {
 		catalogs = []entity.Catalog{}

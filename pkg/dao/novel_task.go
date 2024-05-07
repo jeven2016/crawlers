@@ -14,25 +14,20 @@ import (
 )
 
 type novelTaskInterface interface {
-	FindByCatalogId(ctx context.Context, catalogId string) ([]entity.NovelTask, error)
+	FindByCatalogId(ctx context.Context, catalogId primitive.ObjectID) ([]entity.NovelTask, error)
 	FindByUrl(ctx context.Context, url string) (*entity.NovelTask, error)
 	Save(ctx context.Context, task *entity.NovelTask) (*primitive.ObjectID, error)
 }
 
 type novelTaskDaoImpl struct{}
 
-func (c *novelTaskDaoImpl) FindByCatalogId(ctx context.Context, catalogId string) ([]entity.NovelTask, error) {
+func (c *novelTaskDaoImpl) FindByCatalogId(ctx context.Context, catalogId primitive.ObjectID) ([]entity.NovelTask, error) {
 	findOpts := options.Find()
 	//findOpts.SetProjection(bson.M{base.ColumId: 1, base.ColumnName: 1, base.ColumnDisplayName: 1})
 	findOpts.SetLimit(1000)
 
-	objectId, err := primitive.ObjectIDFromHex(catalogId)
-	if err != nil {
-		return []entity.NovelTask{}, err
-	}
-
 	var tasks []entity.NovelTask
-	err = FindAll(ctx, &tasks, base.CollectionNovelTask, bson.M{base.ColumnCatalogId: objectId}, findOpts)
+	err := FindAll(ctx, &tasks, base.CollectionNovelTask, bson.M{base.ColumnCatalogId: catalogId}, findOpts)
 
 	if tasks == nil {
 		tasks = []entity.NovelTask{}

@@ -34,13 +34,11 @@ func (h *SiteHandler) FindSites(c *gin.Context) {
 
 func (h *SiteHandler) GetSiteCatalogs(c *gin.Context) {
 	siteId := c.Param("siteId")
-
-	if siteId == "" {
-		c.AbortWithStatusJSON(http.StatusBadRequest,
-			base.FailsWithParams(base.ErrSiteNotFound, siteId))
+	siteObjectId := ensureValidId(c, siteId)
+	if siteObjectId == nil {
 		return
 	}
-	if catalogs, err := dao.CatalogDao.FindCatalogsBySiteId(c, siteId); err != nil {
+	if catalogs, err := dao.CatalogDao.FindCatalogsBySiteId(c, *siteObjectId); err != nil {
 		zap.L().Warn("failed to find catalogs", zap.String("siteId", siteId), zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusInternalServerError,
 			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
@@ -98,26 +96,16 @@ func (h *SiteHandler) DeleteSite(c *gin.Context) {
 }
 
 func (h *SiteHandler) ensureValidSiteId(c *gin.Context, siteId string) *primitive.ObjectID {
-	if siteId == "" {
-		zap.L().Warn("siteId is invalid", zap.String("siteId", siteId))
-		c.AbortWithStatusJSON(http.StatusBadRequest,
-			base.FailsWithParams(base.ErrSiteNotFound, siteId))
-		return nil
+	objectId := ensureValidId(c, siteId)
+	if objectId != nil {
+		siteExists, err := dao.SiteDao.ExistsById(c, *objectId)
+		if !siteExists || err != nil {
+			zap.L().Warn("site does not exist", zap.String("siteId", siteId), zap.Error(err))
+			c.AbortWithStatusJSON(http.StatusBadRequest, base.FailsWithParams(base.ErrSiteNotFound, siteId))
+			return nil
+		}
 	}
-	objectId, err := primitive.ObjectIDFromHex(siteId)
-	if err != nil {
-		zap.L().Warn("siteId is invalid", zap.String("siteId", siteId), zap.Error(err))
-		c.AbortWithStatusJSON(http.StatusInternalServerError,
-			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
-		return nil
-	}
-	siteExists, err := dao.SiteDao.ExistsById(c, objectId)
-	if !siteExists || err != nil {
-		zap.L().Warn("site does not exist", zap.String("siteId", siteId), zap.Error(err))
-		c.AbortWithStatusJSON(http.StatusBadRequest, base.FailsWithParams(base.ErrSiteNotFound, siteId))
-		return nil
-	}
-	return &objectId
+	return objectId
 }
 
 // CreateCatalog create a catalog
@@ -213,5 +201,20 @@ func (h *SiteHandler) FindSiteById(c *gin.Context) {
 		return
 	} else {
 		c.JSON(http.StatusOK, site)
+	}
+}
+
+func (h *SiteHandler) FindCatalogById(c *gin.Context) {
+	catalogId := c.Param("catalogId")
+	objectId := ensureValidId(c, catalogId)
+
+	if objectId != nil {
+		if catalog, err := dao.CatalogDao.FindById(c, *objectId); err != nil {
+			zap.L().Warn("failed to find catalog", zap.String("catalogId", catalogId), zap.Error(err))
+			c.AbortWithStatusJSON(http.StatusInternalServerError,
+				base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
+		} else {
+			c.JSON(http.StatusOK, catalog)
+		}
 	}
 }
