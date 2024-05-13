@@ -1,19 +1,12 @@
 package base
 
-import "context"
-
-var (
-	internalCfg *ServerConfig
-	globalCtx   context.Context
+import (
+	"context"
 )
 
-func SetConfig(cfg *ServerConfig) {
-	internalCfg = cfg
-}
-
-func GetConfig() *ServerConfig {
-	return internalCfg
-}
+var (
+	globalCtx context.Context
+)
 
 func SetSystemContext(ctx context.Context) {
 	globalCtx = ctx

@@ -69,13 +69,14 @@ func (s *CatalogTask) GetStatus() base.TaskStatus {
 
 type CatalogPageTask struct {
 	// 添加omitempty，当为空时，mongo driver会自动生成
-	Id         primitive.ObjectID     `bson:"_id,omitempty" json:"id"`
-	CatalogId  primitive.ObjectID     `json:"catalogId" bson:"catalogId" binding:"required"`
-	Url        string                 `bson:"url" json:"url" binding:"required" binding:"required"`
-	Attributes map[string]interface{} `bson:"attributes" json:"attributes"`
-	Status     base.TaskStatus        `bson:"status" json:"status"`
-	SiteName   string                 `bson:"siteName" json:"siteName"`
-	Retries    uint32                 `bson:"retries" json:"retries"`
+	Id          primitive.ObjectID     `bson:"_id,omitempty" json:"id"`
+	CatalogId   primitive.ObjectID     `json:"catalogId" bson:"catalogId" binding:"required"`
+	Url         string                 `bson:"url" json:"url" binding:"required" binding:"required"`
+	Attributes  map[string]interface{} `bson:"attributes" json:"attributes"`
+	Status      base.TaskStatus        `bson:"status" json:"status"`
+	SiteName    string                 `bson:"siteName" json:"siteName"`
+	Retries     uint32                 `bson:"retries" json:"retries"`
+	DownloadNow bool                   `bson:"downloadNow" json:"downloadNow"`
 	OperationDate
 }
 
@@ -99,6 +100,7 @@ type NovelTask struct {
 	Status      base.TaskStatus        `bson:"status" json:"status"`
 	Retries     uint32                 `bson:"retries" json:"retries"`
 	SiteName    string                 `bson:"siteName" json:"siteName"`
+	DownloadNow bool                   `bson:"downloadNow" json:"downloadNow"`
 	OperationDate
 }
 

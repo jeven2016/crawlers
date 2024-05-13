@@ -3,9 +3,10 @@ package crawlers
 import (
 	"context"
 	"crawlers/pkg/base"
-	"crawlers/pkg/dao"
 	"crawlers/pkg/metrics"
 	"crawlers/pkg/model/entity"
+	"crawlers/pkg/repository"
+	"crawlers/pkg/service"
 	"errors"
 	"fmt"
 	"github.com/duke-git/lancet/v2/fileutil"
@@ -71,7 +72,7 @@ func (c kxkmCrawler) CrawlNovelPage(ctx context.Context, novelTask *entity.Novel
 	var chpTasks []entity.ChapterTask
 	var novelFolder string
 
-	siteCfg := base.GetSiteConfig(base.Kxkm)
+	siteCfg := service.ConfigService.GetSiteConfig(base.Kxkm)
 	if siteCfg == nil {
 		return nil, errors.New("no site config found for site " + base.Kxkm)
 	}
@@ -106,7 +107,7 @@ func (c kxkmCrawler) CrawlNovelPage(ctx context.Context, novelTask *entity.Novel
 	var novelId *primitive.ObjectID
 	var err error
 
-	if novelId, err = dao.NovelDao.FindIdByName(ctx, novel.Name); err != nil {
+	if novelId, err = repository.NovelDao.FindIdByName(ctx, novel.Name); err != nil {
 		return nil, err
 	}
 
@@ -116,7 +117,7 @@ func (c kxkmCrawler) CrawlNovelPage(ctx context.Context, novelTask *entity.Novel
 		if novelId != nil {
 			novel.Id = *novelId
 		}
-		if novelId, err = dao.NovelDao.Save(ctx, &novel); err != nil {
+		if novelId, err = repository.NovelDao.Save(ctx, &novel); err != nil {
 			return nil, err
 		}
 	}
@@ -173,7 +174,7 @@ func (c kxkmCrawler) CrawlChapterPage(ctx context.Context, chapterTask *entity.C
 	var restyClient *resty.Client
 	var novel *entity.Novel
 
-	siteCfg := base.GetSiteConfig(base.Kxkm)
+	siteCfg := service.ConfigService.GetSiteConfig(base.Kxkm)
 	if siteCfg == nil {
 		return errors.New("no site config found for site " + base.Kxkm)
 	}
@@ -181,7 +182,7 @@ func (c kxkmCrawler) CrawlChapterPage(ctx context.Context, chapterTask *entity.C
 	cly := c.colly.Clone()
 	zap.L().Info("[kxkm] Got chapter message", zap.String("url", chapterTask.Url))
 
-	if novel, err = dao.NovelDao.FindById(ctx, chapterTask.NovelId); err != nil {
+	if novel, err = repository.NovelDao.FindById(ctx, chapterTask.NovelId); err != nil {
 		return err
 	}
 

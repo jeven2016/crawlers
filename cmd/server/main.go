@@ -4,7 +4,8 @@ import (
 	"context"
 	"crawlers/pkg/api"
 	"crawlers/pkg/base"
-	"crawlers/pkg/dao"
+	"crawlers/pkg/repository"
+	"crawlers/pkg/service"
 	"crawlers/pkg/stream"
 	"embed"
 	_ "embed"
@@ -12,7 +13,7 @@ import (
 	"errors"
 	"fmt"
 	ginI18n "github.com/gin-contrib/i18n"
-	gconfig "github.com/jeven2016/mylibs/config"
+	"github.com/gin-gonic/gin"
 	"github.com/jeven2016/mylibs/system"
 	"github.com/jeven2016/mylibs/utils"
 	"github.com/spf13/cobra"
@@ -50,37 +51,7 @@ func run() {
 		Use:     "crawlers",
 		Short:   "crawlers",
 		Run: func(cmd *cobra.Command, args []string) {
-			cfg := &base.ServerConfig{}
-			if err := gconfig.LoadConfig([]byte(configFile), cfg, extraConfigFile, base.ConfigFiles); err != nil {
-				utils.PrintCmdErr(err)
-				return
-			}
-
-			// globally cache the config
-			base.SetConfig(cfg)
-			server = createServer(cfg, server)
-
-			//global context
-			ctx, cancelFunc := context.WithCancel(context.Background())
-			base.SetSystemContext(ctx)
-
-			sys := systemInit(cfg, cancelFunc, server, ctx)
-			if sys != nil {
-				//ensure the indexes are created
-				dao.EnsureMongoIndexes(ctx)
-
-				//global streams
-				if err := stream.LaunchGlobalSiteStream(ctx); err != nil {
-					zap.L().Error("failed to register streams", zap.Error(err))
-					system.Stop(ctx)
-					return
-				}
-
-				// run as a web server
-				if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-					zap.L().Error("unable to start web server", zap.Error(err))
-				}
-			}
+			runServer(server)
 		},
 	}
 
@@ -92,35 +63,113 @@ func run() {
 	}
 }
 
-// create a http server
-func createServer(cfg *base.ServerConfig, server *http.Server) *http.Server {
-	localeCfg := ginI18n.Localize(ginI18n.WithBundle(&ginI18n.BundleCfg{
-		DefaultLanguage:  language.Chinese,
-		FormatBundleFile: "json",
-		AcceptLanguage:   []language.Tag{language.Chinese},
-		RootPath:         "./i18n/",
-		UnmarshalFunc:    json.Unmarshal,
+// runServer initializes and starts the web server.
+// It loads the internal configuration, sets up the server, and initializes the global context.
+// It also ensures the creation of MongoDB indexes, launches global streams, and handles any errors during server startup.
+//
+// Parameters:
+// - server: A pointer to the http.Server struct representing the existing server.
+func runServer(server *http.Server) {
+	repository.InitRepositories()
+	service.InitServices()
 
-		//get resource from embedded bundle file
-		Loader: &ginI18n.EmbedLoader{
-			FS: i18nFs,
-		},
-	}))
+	//load internal config
+	err := service.ConfigService.LoadInternalConfig(configFile, extraConfigFile)
+	if err != nil {
+		utils.PrintCmdErr(err)
+		return
+	}
 
+	// globally cache the config
+	server = createServer(server)
+
+	//global context
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	base.SetSystemContext(ctx)
+
+	sys := systemInit(cancelFunc, server, ctx)
+	if sys != nil {
+		//ensure the indexes are created
+		repository.EnsureMongoIndexes(ctx)
+
+		//global streams
+		if err := stream.LaunchGlobalSiteStream(ctx); err != nil {
+			zap.L().Error("failed to register streams", zap.Error(err))
+			system.Stop(ctx)
+			return
+		}
+
+		// run a web server
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			zap.L().Error("unable to start web server", zap.Error(err))
+		}
+	}
+}
+
+// createServer initializes and configures a new HTTP server with Gin framework.
+// It also sets up internationalization (i18n) using gin-contrib/i18n package.
+//
+// Parameters:
+// - cfg: A pointer to the InternalConfig struct containing the server configuration.
+// - server: A pointer to the http.Server struct representing the existing server.
+//
+// Returns:
+// - A pointer to the configured http.Server struct.
+func createServer(server *http.Server) *http.Server {
+	// Initialize the i18n configuration
+	localeCfg := ginI18n.Localize(ginI18n.WithBundle(
+		&ginI18n.BundleCfg{
+			DefaultLanguage:  language.Chinese,
+			FormatBundleFile: "json",
+			AcceptLanguage:   []language.Tag{language.Chinese},
+			RootPath:         "./i18n/",
+			UnmarshalFunc:    json.Unmarshal,
+
+			// Load resource from embedded bundle file
+			Loader: &ginI18n.EmbedLoader{
+				FS: i18nFs,
+			},
+		}),
+		ginI18n.WithGetLngHandle(
+			// Set default language to Chinese
+			// http://path/
+			//
+			// Set language to English
+			// http://path/?lang=en
+			//
+			// Set language to Chinese
+			// http://localhost:9014/?lang=zh
+			func(context *gin.Context, defaultLng string) string {
+				// Get language from query string
+				lng := context.Query("lang")
+				if lng == "" {
+					return defaultLng
+				}
+				return lng
+			},
+		))
+
+	// Register endpoints and apply i18n middleware
 	engine := api.RegisterEndpoints(localeCfg)
+
+	cfg := service.ConfigService.GetConfig()
+
+	// Bind server address and port
 	bindAddr := fmt.Sprintf("%v:%v", cfg.Http.Address, cfg.Http.Port)
 	zap.L().Sugar().Info("server listens on ", bindAddr)
+
+	// Configure and return the server
 	server = &http.Server{Addr: bindAddr, Handler: engine}
 	return server
 }
 
 // system initializing
-func systemInit(cfg *base.ServerConfig, cancelFunc context.CancelFunc, server *http.Server, ctx context.Context) *system.System {
+func systemInit(cancelFunc context.CancelFunc, server *http.Server, ctx context.Context) *system.System {
 	return system.Startup(ctx, &system.StartupParams{
 		EnableEtcd:    false,
 		EnableMongodb: true,
 		EnableRedis:   true,
-		Config:        cfg.GetServerConfig(),
+		Config:        service.ConfigService.GetConfig().GetServerConfig(),
 		PreShutdown: func() error {
 			//cancelFunc()
 			return nil

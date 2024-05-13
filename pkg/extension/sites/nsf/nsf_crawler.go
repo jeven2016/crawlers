@@ -3,8 +3,8 @@ package nfs
 import (
 	"context"
 	"crawlers/pkg/base"
-	"crawlers/pkg/dao"
 	"crawlers/pkg/model/entity"
+	"crawlers/pkg/repository"
 	"github.com/chromedp/chromedp"
 	"github.com/go-creed/sat"
 	"github.com/gocolly/colly/v2"
@@ -20,7 +20,7 @@ type NsfCrawler struct {
 	//redis       *cache.Redis
 	//mongoClient *db.Mongo
 	colly *colly.Collector
-	//siteCfg     *base.SiteConfig
+	//siteCfg     *base.SiteSetting
 	//client      *resty.Client
 	zhConvertor sat.Dicter
 }
@@ -130,7 +130,7 @@ func (n *NsfCrawler) CrawlNovelPage(ctx context.Context, novelTask *entity.Novel
 	var novelId *primitive.ObjectID
 	var err error
 
-	if novelId, err = dao.NovelDao.FindIdByName(ctx, novel.Name); err != nil {
+	if novelId, err = repository.NovelDao.FindIdByName(ctx, novel.Name); err != nil {
 		return nil, err
 	}
 
@@ -140,7 +140,7 @@ func (n *NsfCrawler) CrawlNovelPage(ctx context.Context, novelTask *entity.Novel
 		if novelId != nil {
 			novel.Id = *novelId
 		}
-		if novelId, err = dao.NovelDao.Save(ctx, &novel); err != nil {
+		if novelId, err = repository.NovelDao.Save(ctx, &novel); err != nil {
 			return nil, err
 		}
 	}
@@ -186,7 +186,7 @@ func (n *NsfCrawler) CrawlChapterPage(ctx context.Context, chapterTask *entity.C
 	var chapterId *primitive.ObjectID
 
 	// for chapter
-	existingChapter, err := dao.ChapterDao.FindByName(ctx, chapterTask.Name)
+	existingChapter, err := repository.ChapterDao.FindByName(ctx, chapterTask.Name)
 	if err != nil {
 		return
 	}
@@ -206,14 +206,14 @@ func (n *NsfCrawler) CrawlChapterPage(ctx context.Context, chapterTask *entity.C
 
 	//todo
 	if !skipSaveIfPresent || chapterId == nil || (*chapterId).IsZero() {
-		if chapterId, err = dao.ChapterDao.Save(ctx, existingChapter); err != nil {
+		if chapterId, err = repository.ChapterDao.Save(ctx, existingChapter); err != nil {
 			return
 		}
 	}
 
 	//for content
 	//page for chapters, need an enhancement
-	existingContent, err := dao.ContentDao.FindByParentIdAndPage(ctx, chapterId, 0)
+	existingContent, err := repository.ContentDao.FindByParentIdAndPage(ctx, chapterId, 0)
 	if err != nil {
 		return
 	}
@@ -235,7 +235,7 @@ func (n *NsfCrawler) CrawlChapterPage(ctx context.Context, chapterTask *entity.C
 	}
 
 	if !skipSaveIfPresent || existingContent == nil || existingContent.Id.IsZero() {
-		_, err = dao.ContentDao.Save(ctx, existingContent)
+		_, err = repository.ContentDao.Save(ctx, existingContent)
 	}
 	return
 }

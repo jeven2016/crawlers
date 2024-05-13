@@ -3,9 +3,10 @@ package aipic
 import (
 	"context"
 	"crawlers/pkg/base"
-	"crawlers/pkg/dao"
 	"crawlers/pkg/metrics"
 	"crawlers/pkg/model/entity"
+	"crawlers/pkg/repository"
+	"crawlers/pkg/service"
 	"errors"
 	"github.com/go-creed/sat"
 	"github.com/gocolly/colly/v2"
@@ -63,7 +64,7 @@ func (c Aipic) CrawlCatalogPage(ctx context.Context, catalogPageTask *entity.Cat
 func (c Aipic) CrawlNovelPage(ctx context.Context, novelTask *entity.NovelTask, skipSaveIfPresent bool) ([]entity.ChapterTask, error) {
 	zap.L().Info("Got novel message", zap.String("url", novelTask.Url))
 
-	siteCfg := base.GetSiteConfig(base.Aipic)
+	siteCfg := service.ConfigService.GetSiteConfig(base.Aipic)
 	if siteCfg == nil {
 		return nil, errors.New("no site config found for site " + base.Aipic)
 	}
@@ -121,7 +122,7 @@ func (c Aipic) CrawlNovelPage(ctx context.Context, novelTask *entity.NovelTask, 
 	var novelId *primitive.ObjectID
 	var err error
 
-	if novelId, err = dao.NovelDao.FindIdByName(ctx, novel.Name); err != nil {
+	if novelId, err = repository.NovelDao.FindIdByName(ctx, novel.Name); err != nil {
 		return nil, err
 	}
 
@@ -130,7 +131,7 @@ func (c Aipic) CrawlNovelPage(ctx context.Context, novelTask *entity.NovelTask, 
 		if novelId != nil {
 			novel.Id = *novelId
 		}
-		if novelId, err = dao.NovelDao.Save(ctx, &novel); err != nil {
+		if novelId, err = repository.NovelDao.Save(ctx, &novel); err != nil {
 			return nil, err
 		}
 	}

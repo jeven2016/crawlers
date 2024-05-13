@@ -1,9 +1,10 @@
-package api
+package handler
 
 import (
 	"crawlers/pkg/base"
-	"crawlers/pkg/dao"
 	"crawlers/pkg/model/entity"
+	"crawlers/pkg/repository"
+	"crawlers/pkg/service"
 	"crawlers/pkg/stream"
 	"github.com/duke-git/lancet/v2/slice"
 	"github.com/gin-gonic/gin"
@@ -12,6 +13,7 @@ import (
 	"go.uber.org/zap"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 // TaskHandler task handler for submitting tasks to message stream
@@ -21,14 +23,14 @@ func NewTaskHandler() *TaskHandler {
 	return &TaskHandler{}
 }
 
-func (h *TaskHandler) GetTasksOfCatalogPage(c *gin.Context) {
+func (h *TaskHandler) FindTasksOfCatalogPage(c *gin.Context) {
 	catalogId := c.Query("catalogId")
 	objectId := ensureValidId(c, catalogId)
 
 	if objectId == nil {
 		return
 	}
-	if catalogs, err := dao.CatalogPageTaskDao.FindTasksByCatalogId(c, *objectId); err != nil {
+	if catalogs, err := repository.CatalogPageTaskDao.FindTasksByCatalogId(c, *objectId); err != nil {
 		zap.L().Warn("failed to find catalogPage tasks", zap.String("catalogId", catalogId), zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusInternalServerError,
 			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
@@ -38,25 +40,25 @@ func (h *TaskHandler) GetTasksOfCatalogPage(c *gin.Context) {
 	}
 }
 
-func (h *TaskHandler) GetTasksOfNovel(c *gin.Context) {
+func (h *TaskHandler) FindTasksOfNovel(c *gin.Context) {
 	catalogId := c.Query("catalogId")
 	objectId := ensureValidId(c, catalogId)
 
 	if objectId == nil {
 		return
 	}
-	if catalogs, err := dao.NovelTaskDao.FindByCatalogId(c, *objectId); err != nil {
+	if novelTasks, err := repository.NovelTaskDao.FindByCatalogId(c, *objectId); err != nil {
 		zap.L().Warn("failed to find novel tasks", zap.String("catalogId", catalogId), zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusInternalServerError,
 			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
 		return
 	} else {
-		c.JSON(http.StatusOK, catalogs)
+		c.JSON(http.StatusOK, novelTasks)
 	}
 }
 
-// HandleCatalogPage handler for catalog page request and to parse the novel links for further processing
-// @Tags 测试
+// CreateCatalogPageTask handler for catalog page request and to parse the novel links for further processing
+// @Tags API
 // @Summary  处理目录页面请求
 // @Description 处理目录页面请求,解析出Novel的地址并发送到消息对列中去
 // @Param   request 	body    entity.CatalogPageTask   true   "目录ID"
@@ -64,7 +66,7 @@ func (h *TaskHandler) GetTasksOfNovel(c *gin.Context) {
 // @Produce application/json
 // @Success 200
 // @Router /tasks/catalog-pages [post]
-func (h *TaskHandler) HandleCatalogPage(c *gin.Context) {
+func (h *TaskHandler) CreateCatalogPageTask(c *gin.Context) {
 	var pageTask entity.CatalogPageTask
 	if !bindJson(c, &pageTask) {
 		return
@@ -129,13 +131,13 @@ func (h *TaskHandler) getTaskEntity(c *gin.Context, catalogId primitive.ObjectID
 	var catalog *entity.Catalog
 	catalogStringId := catalogId.Hex()
 	siteStringId := catalogId.Hex()
-	if catalog, err = dao.CatalogDao.FindById(c, catalogId); err != nil {
+	if catalog, err = repository.CatalogDao.FindById(c, catalogId); err != nil {
 		zap.L().Warn("catalog does not exist", zap.String("catalogId", catalogStringId), zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusBadRequest, base.FailsWithParams(base.ErrCatalogNotFound, catalogStringId))
 		hasError = true
 		return
 	}
-	if site, err = dao.SiteDao.FindById(c, catalog.SiteId); err != nil {
+	if site, err = repository.SiteDao.FindById(c, catalog.SiteId); err != nil {
 		zap.L().Warn("site does not exist", zap.String("siteId", siteStringId), zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusBadRequest, base.FailsWithParams(base.ErrSiteNotFound, siteStringId))
 		hasError = true
@@ -143,8 +145,8 @@ func (h *TaskHandler) getTaskEntity(c *gin.Context, catalogId primitive.ObjectID
 	return
 }
 
-// HandleNovelPage handle for novel page request and parse the chapter links for further processing
-// @Tags 测试
+// CreateNovelPageTask handle for novel page request and parse the chapter links for further processing
+// @Tags API
 // @Summary  处理Novel页面请求
 // @Description 处理Novel页面请求,解析出章节的地址并发送到消息对列中去
 // @Param   request	body   entity.NovelTask   true   "Novel Task"
@@ -152,7 +154,7 @@ func (h *TaskHandler) getTaskEntity(c *gin.Context, catalogId primitive.ObjectID
 // @Produce application/json
 // @Success 200
 // @Router /tasks/novels [post]
-func (h *TaskHandler) HandleNovelPage(c *gin.Context) {
+func (h *TaskHandler) CreateNovelPageTask(c *gin.Context) {
 	var novelTask entity.NovelTask
 	if !bindJson(c, &novelTask) {
 		return
@@ -162,7 +164,7 @@ func (h *TaskHandler) HandleNovelPage(c *gin.Context) {
 	var hasError bool
 
 	//check if the url is excluded
-	if slice.Contain(base.GetConfig().CrawlerSettings.ExcludedNovelUrls, novelTask.Url) {
+	if slice.Contain(service.ConfigService.GetConfig().CrawlerSettings.ExcludedNovelUrls, novelTask.Url) {
 		zap.L().Warn("excluded novel url", zap.String("url", novelTask.Url))
 		c.AbortWithStatusJSON(http.StatusBadRequest, base.Fails(base.ErrExcludedNovel))
 		return
@@ -180,4 +182,21 @@ func (h *TaskHandler) HandleNovelPage(c *gin.Context) {
 		zap.L().Warn("failed to publish a message", zap.String("pageUrl", novelTask.Url), zap.Error(err))
 		return
 	}
+}
+
+func (h *TaskHandler) DeleteNovelPageTasks(c *gin.Context) {
+	ids := c.Query("idArray")
+
+	if ids == "" {
+		c.AbortWithStatusJSON(http.StatusBadRequest, base.FailsWithParams(base.ErrRequired, "idArray"))
+		return
+	}
+	idArray := strings.Split(ids, ",")
+
+	if err := service.NovelService.DeleteByIds(c, idArray); err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, base.FailsWithParams(base.ErrCodeUnknown, err.Error()))
+		zap.L().Warn("failed to delete novel tasks", zap.Any("request", ids), zap.Error(err))
+		return
+	}
+	c.Status(http.StatusNoContent)
 }

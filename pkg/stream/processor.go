@@ -2,9 +2,10 @@ package stream
 
 import (
 	"crawlers/pkg/base"
-	"crawlers/pkg/dao"
 	"crawlers/pkg/metrics"
 	"crawlers/pkg/model/entity"
+	"crawlers/pkg/repository"
+	"crawlers/pkg/service"
 	"encoding/json"
 	"errors"
 	"github.com/duke-git/lancet/v2/convertor"
@@ -34,7 +35,7 @@ func NewTaskProcessor() TaskProcessor {
 
 // ParsePageUrls parses all page urls based on origin page url which could be combined by multiple pages
 func (d DefaultTaskProcessor) ParsePageUrls(siteName, originPageUrl string) ([]string, error) {
-	cfg := base.GetSiteConfig(siteName)
+	cfg := service.ConfigService.GetSiteConfig(siteName)
 	if cfg == nil {
 		return nil, errors.New("Could not find site config: " + siteName)
 	}
@@ -70,7 +71,7 @@ func (d DefaultTaskProcessor) HandleCatalogPageTask(jsonData string) (novelMsgs 
 		return nil
 	}
 
-	cfg := base.GetSiteConfig(catalogPageTask.SiteName)
+	cfg := service.ConfigService.GetSiteConfig(catalogPageTask.SiteName)
 
 	//check if to skip specific operations
 	var skipIfPresent = getSettingValue[bool](cfg, "CatalogPage", "skipIfPresent", true)
@@ -102,7 +103,7 @@ func (d DefaultTaskProcessor) HandleCatalogPageTask(jsonData string) (novelMsgs 
 
 	//check if it exists in order to save or update in db
 	var existingTask *entity.CatalogPageTask
-	if existingTask, err = dao.CatalogPageTaskDao.FindByUrl(base.GetSystemContext(), catalogPageTask.Url); err != nil {
+	if existingTask, err = repository.CatalogPageTaskDao.FindByUrl(base.GetSystemContext(), catalogPageTask.Url); err != nil {
 		zap.L().Error("failed to retrieve catalog page task", zap.String("jsonData", jsonData), zap.Error(err))
 		return nil
 	}
@@ -130,7 +131,7 @@ func (d DefaultTaskProcessor) HandleCatalogPageTask(jsonData string) (novelMsgs 
 	}
 
 	if !exists || !skipSaveIfPresent {
-		if _, err = dao.CatalogPageTaskDao.Save(base.GetSystemContext(), &catalogPageTask); err != nil {
+		if _, err = repository.CatalogPageTaskDao.Save(base.GetSystemContext(), &catalogPageTask); err != nil {
 			zap.L().Error("failed to save catalogPageTask", zap.Error(err))
 		}
 	} else {
@@ -160,14 +161,14 @@ func (d DefaultTaskProcessor) HandleNovelTask(jsonData string) (chapterMessages 
 		return nil
 	}
 
-	if slice.Contain(base.GetConfig().CrawlerSettings.ExcludedNovelUrls, novelTask.Url) {
+	if slice.Contain(service.ConfigService.GetConfig().CrawlerSettings.ExcludedNovelUrls, novelTask.Url) {
 		zap.L().Warn("excluded novel url", zap.String("url", novelTask.Url))
 		return
 	}
 
 	zap.L().Info("handle novel task", zap.String("json", jsonData))
 
-	cfg := base.GetSiteConfig(novelTask.SiteName)
+	cfg := service.ConfigService.GetSiteConfig(novelTask.SiteName)
 
 	//whether to skip specific operations
 	var skipIfPresent = getSettingValue[bool](cfg, "Novel", "skipIfPresent", true)
@@ -191,55 +192,59 @@ func (d DefaultTaskProcessor) HandleNovelTask(jsonData string) (chapterMessages 
 		return nil
 	}
 
-	crawler := GetSiteCrawler(novelTask.SiteName)
-	if crawler == nil {
-		zap.L().Error("site crawler not found", zap.String("SiteName", novelTask.SiteName))
-		return nil
-	}
-
-	//check if it exists in db
-	var existingTask *entity.NovelTask
-	if existingTask, err = dao.NovelTaskDao.FindByUrl(base.GetSystemContext(), novelTask.Url); err != nil {
-		zap.L().Error("failed to retrieve novel page task", zap.String("jsonData", jsonData), zap.Error(err))
-		return nil
-	}
-
-	currentTime := time.Now()
-	if chapterMessages, err = crawler.CrawlNovelPage(base.GetSystemContext(), &novelTask, skipSaveIfPresent); err != nil {
-		zap.L().Warn("CrawlNovelPage error", zap.String("novel", novelTask.Url), zap.Error(err))
-		//save failed, update the status
-		if existingTask != nil {
-			if err = convertor.CopyProperties(&novelTask, existingTask); err != nil {
-				zap.L().Error("failed to copy properties of novel task", zap.Error(err))
-				return nil
-			}
-			//如果之前重试过，重试次数加1
-			if novelTask.Status == base.TaskStatusFailed ||
-				novelTask.Status == base.TaskStatusRetryFailed {
-				novelTask.Retries++
-				novelTask.Status = base.TaskStatusRetryFailed
-			}
-		} else {
-			novelTask.Status = base.TaskStatusFailed
+	if novelTask.DownloadNow {
+		crawler := GetSiteCrawler(novelTask.SiteName)
+		if crawler == nil {
+			zap.L().Error("site crawler not found", zap.String("SiteName", novelTask.SiteName))
+			return nil
 		}
-		novelTask.LastUpdated = &currentTime
+
+		//check if it exists in db
+		var existingTask *entity.NovelTask
+		if existingTask, err = repository.NovelTaskDao.FindByUrl(base.GetSystemContext(), novelTask.Url); err != nil {
+			zap.L().Error("failed to retrieve novel page task", zap.String("jsonData", jsonData), zap.Error(err))
+			return nil
+		}
+
+		currentTime := time.Now()
+		if chapterMessages, err = crawler.CrawlNovelPage(base.GetSystemContext(), &novelTask, skipSaveIfPresent); err != nil {
+			zap.L().Warn("CrawlNovelPage error", zap.String("novel", novelTask.Url), zap.Error(err))
+			//save failed, update the status
+			if existingTask != nil {
+				if err = convertor.CopyProperties(&novelTask, existingTask); err != nil {
+					zap.L().Error("failed to copy properties of novel task", zap.Error(err))
+					return nil
+				}
+				//如果之前重试过，重试次数加1
+				if novelTask.Status == base.TaskStatusFailed ||
+					novelTask.Status == base.TaskStatusRetryFailed {
+					novelTask.Retries++
+					novelTask.Status = base.TaskStatusRetryFailed
+				}
+			} else {
+				novelTask.Status = base.TaskStatusFailed
+			}
+			novelTask.LastUpdated = &currentTime
+		} else {
+			//已经处理过，记录该url
+			novelTask.Status = base.TaskStatusFinished
+			novelTask.CreatedDate = &currentTime
+		}
+
+		//是否不需处理chapter
+		if !enableChapter {
+			chapterMessages = nil
+		}
+
+		if val, ok := novelTask.Attributes["onlyCoverImage"]; ok && val.(bool) {
+			chapterMessages = nil
+		}
 	} else {
-		//已经处理过，记录该url
-		novelTask.Status = base.TaskStatusFinished
-		novelTask.CreatedDate = &currentTime
-	}
-
-	//是否不需处理chapter
-	if !enableChapter {
-		chapterMessages = nil
-	}
-
-	if val, ok := novelTask.Attributes["onlyCoverImage"]; ok && val.(bool) {
-		chapterMessages = nil
+		novelTask.Status = base.TaskStatusNotStared
 	}
 
 	if !exists || !skipSaveIfPresent {
-		if _, err = dao.NovelTaskDao.Save(base.GetSystemContext(), &novelTask); err != nil {
+		if _, err = repository.NovelTaskDao.Save(base.GetSystemContext(), &novelTask); err != nil {
 			zap.L().Error("failed to save novelTask", zap.Error(err))
 		}
 	} else {
@@ -269,7 +274,7 @@ func (d DefaultTaskProcessor) HandleChapterTask(jsonData string) interface{} {
 	}
 	zap.L().Info("handle chapter task", zap.String("json", jsonData))
 
-	cfg := base.GetSiteConfig(chapterTask.SiteName)
+	cfg := service.ConfigService.GetSiteConfig(chapterTask.SiteName)
 
 	//whether to skip specific operations
 	var skipIfPresent = getSettingValue[bool](cfg, "Chapter", "skipIfPresent", true)
@@ -300,7 +305,7 @@ func (d DefaultTaskProcessor) HandleChapterTask(jsonData string) interface{} {
 
 	//check if it exists in db
 	var existingTask *entity.ChapterTask
-	if existingTask, err = dao.ChapterTaskDao.FindByUrl(base.GetSystemContext(), chapterTask.Url); err != nil {
+	if existingTask, err = repository.ChapterTaskDao.FindByUrl(base.GetSystemContext(), chapterTask.Url); err != nil {
 		zap.L().Error("failed to retrieve chapter page task", zap.String("jsonData", jsonData), zap.Error(err))
 		return nil
 	}
@@ -344,7 +349,7 @@ func (d DefaultTaskProcessor) HandleChapterTask(jsonData string) interface{} {
 	//}
 
 	if (!exists || !skipSaveIfPresent) && enableChapter {
-		if _, err = dao.ChapterTaskDao.Save(base.GetSystemContext(), &chapterTask); err != nil {
+		if _, err = repository.ChapterTaskDao.Save(base.GetSystemContext(), &chapterTask); err != nil {
 			zap.L().Error("failed to save chapterTask", zap.Error(err))
 		}
 	} else {
@@ -360,7 +365,7 @@ func isDuplicatedTask[T any](task *T, collectionName,
 	url string, bsonFilter bson.M) (bool /*existence*/, error /*interrupted*/) {
 
 	jsonString, err := utils.GetAndSet(base.GetSystemContext(), url, func() (*string, error) {
-		data, err := dao.FindOneByFilter(base.GetSystemContext(),
+		data, err := repository.FindOneByFilter(base.GetSystemContext(),
 			bsonFilter, collectionName, task, &options.FindOneOptions{})
 		if err != nil || data == nil {
 			return nil, err
@@ -387,7 +392,7 @@ func isDuplicatedTask[T any](task *T, collectionName,
 	return false, err
 }
 
-func getSettingValue[T any](cfg *base.SiteConfig, mapField, mapKey string, defaultValue T) T {
+func getSettingValue[T any](cfg *entity.SiteSetting, mapField, mapKey string, defaultValue T) T {
 	if cfg != nil && cfg.CrawlerSettings != nil {
 		s := structs.New(cfg.CrawlerSettings)
 

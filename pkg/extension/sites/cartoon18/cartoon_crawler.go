@@ -3,9 +3,10 @@ package cartoon18
 import (
 	"context"
 	"crawlers/pkg/base"
-	"crawlers/pkg/dao"
 	"crawlers/pkg/metrics"
 	"crawlers/pkg/model/entity"
+	"crawlers/pkg/repository"
+	"crawlers/pkg/service"
 	"errors"
 	"fmt"
 	"github.com/duke-git/lancet/v2/fileutil"
@@ -67,7 +68,7 @@ func (c CartoonCrawler) CrawlCatalogPage(ctx context.Context, catalogPageTask *e
 func (c CartoonCrawler) CrawlNovelPage(ctx context.Context, novelTask *entity.NovelTask, skipSaveIfPresent bool) ([]entity.ChapterTask, error) {
 	zap.L().Info("Got novel message", zap.String("url", novelTask.Url))
 
-	siteCfg := base.GetSiteConfig(base.Cartoon18)
+	siteCfg := service.ConfigService.GetSiteConfig(base.Cartoon18)
 	if siteCfg == nil {
 		return nil, errors.New("no site config found for site " + base.Cartoon18)
 	}
@@ -118,7 +119,7 @@ func (c CartoonCrawler) CrawlNovelPage(ctx context.Context, novelTask *entity.No
 	var novelId *primitive.ObjectID
 	var err error
 
-	if novelId, err = dao.NovelDao.FindIdByName(ctx, novel.Name); err != nil {
+	if novelId, err = repository.NovelDao.FindIdByName(ctx, novel.Name); err != nil {
 		return nil, err
 	}
 
@@ -128,7 +129,7 @@ func (c CartoonCrawler) CrawlNovelPage(ctx context.Context, novelTask *entity.No
 		if novelId != nil {
 			novel.Id = *novelId
 		}
-		if novelId, err = dao.NovelDao.Save(ctx, &novel); err != nil {
+		if novelId, err = repository.NovelDao.Save(ctx, &novel); err != nil {
 			return nil, err
 		}
 	}
@@ -162,7 +163,7 @@ func (c CartoonCrawler) CrawlChapterPage(ctx context.Context, chapterTask *entit
 	var restyClient *resty.Client
 	var novel *entity.Novel
 
-	siteCfg := base.GetSiteConfig(base.Cartoon18)
+	siteCfg := service.ConfigService.GetSiteConfig(base.Cartoon18)
 	if siteCfg == nil {
 		return errors.New("no site config found for site " + base.Cartoon18)
 	}
@@ -170,7 +171,7 @@ func (c CartoonCrawler) CrawlChapterPage(ctx context.Context, chapterTask *entit
 	cly := c.colly.Clone()
 	zap.L().Info("Got chapter message", zap.String("url", chapterTask.Url))
 
-	if novel, err = dao.NovelDao.FindById(ctx, chapterTask.NovelId); err != nil {
+	if novel, err = repository.NovelDao.FindById(ctx, chapterTask.NovelId); err != nil {
 		return err
 	}
 

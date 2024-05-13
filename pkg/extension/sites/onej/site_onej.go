@@ -4,6 +4,7 @@ import (
 	"context"
 	"crawlers/pkg/base"
 	"crawlers/pkg/model/entity"
+	"crawlers/pkg/service"
 	"encoding/base64"
 	"errors"
 	"github.com/gocolly/colly/v2"
@@ -99,7 +100,7 @@ func (s *SiteOnej) CrawlCatalogPage(ctx context.Context, catalogPageMsg *entity.
 // CrawlNovelPage 解析具体的Novel
 func (s *SiteOnej) CrawlNovelPage(ctx context.Context, novelPageMsg *entity.NovelTask, skipSaveIfPresent bool) ([]entity.ChapterTask, error) {
 	zap.L().Info("Got novel message", zap.String("name", novelPageMsg.Name))
-	siteCfg := base.GetSiteConfig(base.SiteOneJ)
+	siteCfg := service.ConfigService.GetSiteConfig(base.SiteOneJ)
 	if siteCfg == nil {
 		return nil, errors.New("no site config found for site " + base.SiteOneJ)
 	}

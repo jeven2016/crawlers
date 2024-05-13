@@ -125,6 +125,29 @@ info:
   title: crawler文档
   version: "0.2"
 paths:
+  /catalogs/{catalogId}:
+    get:
+      consumes:
+      - application/json
+      description: 通过ID查找目录
+      parameters:
+      - description: 目录ID
+        in: path
+        name: catalogId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/crawlers_pkg_model_entity.Catalog'
+            type: array
+      summary: 通过ID查找目录
+      tags:
+      - API
   /sites:
     post:
       consumes:
@@ -156,7 +179,30 @@ paths:
           description: Created
       summary: 创建网站下的目录
       tags:
-      - 测试
+      - API
+  /sites/{siteId}:
+    get:
+      consumes:
+      - application/json
+      description: 通过ID查找Site
+      parameters:
+      - description: Site ID
+        in: path
+        name: siteId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/crawlers_pkg_model_entity.Site'
+            type: array
+      summary: 通过ID查找Site
+      tags:
+      - API
   /tasks/catalog-pages:
     post:
       consumes:
@@ -176,7 +222,7 @@ paths:
           description: OK
       summary: 处理目录页面请求
       tags:
-      - 测试
+      - API
   /tasks/novels:
     post:
       consumes:
@@ -196,5 +242,5 @@ paths:
           description: OK
       summary: 处理Novel页面请求
       tags:
-      - 测试
+      - API
 swagger: "2.0"

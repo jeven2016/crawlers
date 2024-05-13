@@ -16,6 +16,41 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/catalogs/{catalogId}": {
+            "get": {
+                "description": "通过ID查找目录",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "API"
+                ],
+                "summary": "通过ID查找目录",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "目录ID",
+                        "name": "catalogId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/crawlers_pkg_model_entity.Catalog"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/sites": {
             "post": {
                 "description": "创建新的创建网站目录，管理Novel、章节等数据",
@@ -26,7 +61,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "测试"
+                    "API"
                 ],
                 "summary": "创建网站下的目录",
                 "parameters": [
@@ -65,6 +100,41 @@ const docTemplate = `{
                 }
             }
         },
+        "/sites/{siteId}": {
+            "get": {
+                "description": "通过ID查找Site",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "API"
+                ],
+                "summary": "通过ID查找Site",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Site ID",
+                        "name": "siteId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/crawlers_pkg_model_entity.Site"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/tasks/catalog-pages": {
             "post": {
                 "description": "处理目录页面请求,解析出Novel的地址并发送到消息对列中去",
@@ -75,7 +145,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "测试"
+                    "API"
                 ],
                 "summary": "处理目录页面请求",
                 "parameters": [
@@ -106,7 +176,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "测试"
+                    "API"
                 ],
                 "summary": "处理Novel页面请求",
                 "parameters": [

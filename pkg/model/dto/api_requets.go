@@ -13,3 +13,7 @@ type CreateRequest struct {
 	Collection    string `json:"collection"`
 	RedisCacheKey string `json:"redisCacheKey"`
 }
+
+type DeleteTasksRequest struct {
+	IdArray []string `json:"idArray"`
+}

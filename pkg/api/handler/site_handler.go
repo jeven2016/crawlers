@@ -1,10 +1,10 @@
-package api
+package handler
 
 import (
 	"crawlers/pkg/base"
-	"crawlers/pkg/dao"
 	"crawlers/pkg/model/dto"
 	"crawlers/pkg/model/entity"
+	"crawlers/pkg/repository"
 	"github.com/gin-gonic/gin"
 	"github.com/jeven2016/mylibs/system"
 	"github.com/jeven2016/mylibs/utils"
@@ -22,7 +22,7 @@ func NewSiteHandler() *SiteHandler {
 }
 
 func (h *SiteHandler) FindSites(c *gin.Context) {
-	if sites, err := dao.SiteDao.FindSites(c); err != nil {
+	if sites, err := repository.SiteDao.FindSites(c); err != nil {
 		zap.L().Warn("failed to find sites", zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusInternalServerError,
 			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
@@ -32,13 +32,13 @@ func (h *SiteHandler) FindSites(c *gin.Context) {
 	}
 }
 
-func (h *SiteHandler) GetSiteCatalogs(c *gin.Context) {
+func (h *SiteHandler) FindSiteCatalogs(c *gin.Context) {
 	siteId := c.Param("siteId")
 	siteObjectId := ensureValidId(c, siteId)
 	if siteObjectId == nil {
 		return
 	}
-	if catalogs, err := dao.CatalogDao.FindCatalogsBySiteId(c, *siteObjectId); err != nil {
+	if catalogs, err := repository.CatalogDao.FindCatalogsBySiteId(c, *siteObjectId); err != nil {
 		zap.L().Warn("failed to find catalogs", zap.String("siteId", siteId), zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusInternalServerError,
 			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
@@ -49,7 +49,7 @@ func (h *SiteHandler) GetSiteCatalogs(c *gin.Context) {
 }
 
 // CreateSite create a site
-// @Tags 测试
+// @Tags API
 // @Summary  创建新的可解析的网站
 // @Description 创建新的可解析的网站，管理目录、Novel、章节等数据
 // @Param   name	       body   entity.Site   true   "网站名称"
@@ -84,7 +84,7 @@ func (h *SiteHandler) DeleteSite(c *gin.Context) {
 	if objectId == nil {
 		return
 	}
-	if err := dao.SiteDao.DeleteById(c, *objectId); err != nil {
+	if err := repository.SiteDao.DeleteById(c, *objectId); err != nil {
 		zap.L().Warn("failed to delete site", zap.String("siteId", siteId), zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusInternalServerError,
 			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
@@ -98,7 +98,7 @@ func (h *SiteHandler) DeleteSite(c *gin.Context) {
 func (h *SiteHandler) ensureValidSiteId(c *gin.Context, siteId string) *primitive.ObjectID {
 	objectId := ensureValidId(c, siteId)
 	if objectId != nil {
-		siteExists, err := dao.SiteDao.ExistsById(c, *objectId)
+		siteExists, err := repository.SiteDao.ExistsById(c, *objectId)
 		if !siteExists || err != nil {
 			zap.L().Warn("site does not exist", zap.String("siteId", siteId), zap.Error(err))
 			c.AbortWithStatusJSON(http.StatusBadRequest, base.FailsWithParams(base.ErrSiteNotFound, siteId))
@@ -109,7 +109,7 @@ func (h *SiteHandler) ensureValidSiteId(c *gin.Context, siteId string) *primitiv
 }
 
 // CreateCatalog create a catalog
-// @Tags 测试
+// @Tags API
 // @Summary  创建网站下的目录
 // @Description 创建新的创建网站目录，管理Novel、章节等数据
 // @Param   siteId	body   entity.Catalog   true   "网站ID"
@@ -130,7 +130,7 @@ func (h *SiteHandler) CreateCatalog(c *gin.Context) {
 
 	//check if the site exists and cache the result
 	exists, err := utils.Exists(c, utils.GenKey(base.SiteKeyExistsPrefix, catalog.SiteId.Hex()), func() (any, error) {
-		return dao.SiteDao.ExistsById(c, catalog.SiteId)
+		return repository.SiteDao.ExistsById(c, catalog.SiteId)
 	})
 	if err != nil {
 		zap.L().Warn("failed to check if any sites exist with this siteId", zap.String("siteId", catalog.SiteId.Hex()),
@@ -160,7 +160,7 @@ func (h *SiteHandler) doCreate(c *gin.Context, req *dto.CreateRequest) {
 	col := system.GetSystem().GetCollection(req.Collection)
 
 	exists, err := utils.Exists(c, req.RedisCacheKey, func() (any, error) {
-		return dao.CatalogDao.ExistsByName(c, req.Name)
+		return repository.CatalogDao.ExistsByName(c, req.Name)
 	})
 	if err != nil {
 		zap.L().Warn("failed to check if it exists", zap.Error(err), zap.Any("request", req.Entity))
@@ -186,6 +186,15 @@ func (h *SiteHandler) doCreate(c *gin.Context, req *dto.CreateRequest) {
 	}
 }
 
+// FindSiteById finds a site by id
+// @Tags API
+// @Summary 通过ID查找Site
+// @Description 通过ID查找Site
+// @Param siteId path string  true "Site ID"
+// @Accept  application/json
+// @Produce application/json
+// @Success 200 array entity.Site
+// @Router /sites/{siteId} [get]
 func (h *SiteHandler) FindSiteById(c *gin.Context) {
 	siteId := c.Param("siteId")
 
@@ -194,7 +203,7 @@ func (h *SiteHandler) FindSiteById(c *gin.Context) {
 		return
 	}
 
-	if site, err := dao.SiteDao.FindById(c, *objectId); err != nil {
+	if site, err := repository.SiteDao.FindById(c, *objectId); err != nil {
 		zap.L().Warn("failed to find site", zap.String("siteId", siteId), zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusInternalServerError,
 			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
@@ -204,12 +213,21 @@ func (h *SiteHandler) FindSiteById(c *gin.Context) {
 	}
 }
 
+// FindCatalogById find catalog by id
+// @Tags API
+// @Summary  通过ID查找目录
+// @Description 通过ID查找目录
+// @Param   catalogId	path   string   true   "目录ID"
+// @Accept  application/json
+// @Produce application/json
+// @Success 200 array entity.Catalog
+// @Router /catalogs/{catalogId} [get]
 func (h *SiteHandler) FindCatalogById(c *gin.Context) {
 	catalogId := c.Param("catalogId")
 	objectId := ensureValidId(c, catalogId)
 
 	if objectId != nil {
-		if catalog, err := dao.CatalogDao.FindById(c, *objectId); err != nil {
+		if catalog, err := repository.CatalogDao.FindById(c, *objectId); err != nil {
 			zap.L().Warn("failed to find catalog", zap.String("catalogId", catalogId), zap.Error(err))
 			c.AbortWithStatusJSON(http.StatusInternalServerError,
 				base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))

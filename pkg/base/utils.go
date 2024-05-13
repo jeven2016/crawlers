@@ -3,7 +3,6 @@ package base
 import (
 	"encoding/json"
 	"errors"
-	"github.com/duke-git/lancet/v2/slice"
 	"go.uber.org/zap"
 	"reflect"
 	"regexp"
@@ -73,16 +72,6 @@ func GenPageUrls(pageRegex, url, pagePrefix, pageSuffix string) ([]string, error
 		return pageUrls, nil
 	}
 	return []string{url}, nil
-}
-
-func GetSiteConfig(siteKey string) *SiteConfig {
-	cfg, ok := slice.FindBy(GetConfig().WebSites, func(index int, item SiteConfig) bool {
-		return item.Name == siteKey
-	})
-	if !ok {
-		return nil
-	}
-	return &cfg
 }
 
 func Convert(jsonData string, obj any) bool {

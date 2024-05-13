@@ -2,6 +2,7 @@ package api
 
 import (
 	_ "crawlers/docs"
+	"crawlers/pkg/api/handler"
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -30,8 +31,8 @@ func RegisterEndpoints(localeCfg gin.HandlerFunc) *gin.Engine {
 	//   - stack means whether output the stack info.
 	engine.Use(ginzap.RecoveryWithZap(zap.L(), false))
 
-	hd := NewTaskHandler()
-	siteHandler := NewSiteHandler()
+	hd := handler.NewTaskHandler()
+	siteHandler := handler.NewSiteHandler()
 
 	//gin-swagger 同时还提供了 DisablingWrapHandler 函数，方便我们通过设置某些环境变量来禁用Swagger。
 	//此时如果将环境变量 NAME_OF_ENV_VARIABLE设置为任意值，则 /swagger/*any 将返回404响应，就像未指定路由时一样
@@ -47,15 +48,17 @@ func RegisterEndpoints(localeCfg gin.HandlerFunc) *gin.Engine {
 	routerGroup.GET("/sites", siteHandler.FindSites)
 	routerGroup.GET("/sites/:siteId", siteHandler.FindSiteById)
 	routerGroup.DELETE("/sites/:siteId", siteHandler.DeleteSite)
-	routerGroup.GET("/sites/:siteId/catalogs", siteHandler.GetSiteCatalogs)
-	routerGroup.GET("/tasks/catalog-pages", hd.GetTasksOfCatalogPage)
-	routerGroup.GET("/tasks/novels", hd.GetTasksOfNovel)
+	routerGroup.GET("/sites/:siteId/catalogs", siteHandler.FindSiteCatalogs)
+	routerGroup.GET("/tasks/catalog-pages", hd.FindTasksOfCatalogPage)
+	routerGroup.GET("/tasks/novels", hd.FindTasksOfNovel)
 
 	routerGroup.POST("/catalogs", siteHandler.CreateCatalog)
 	routerGroup.POST("/catalogs/:catalogId", siteHandler.FindCatalogById)
 	routerGroup.POST("/sites", siteHandler.CreateSite)
-	routerGroup.POST("/tasks/catalog-pages", hd.HandleCatalogPage)
-	routerGroup.POST("/tasks/novels", hd.HandleNovelPage)
+	routerGroup.POST("/tasks/catalog-pages", hd.CreateCatalogPageTask)
+	routerGroup.POST("/tasks/novels", hd.CreateNovelPageTask)
+
+	routerGroup.DELETE("/tasks/novels", hd.DeleteNovelPageTasks)
 	//routerGroup.POST("/tasks/schedule-task", hd.RunScheduleTask)
 
 	return engine

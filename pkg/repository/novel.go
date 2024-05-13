@@ -1,4 +1,4 @@
-package dao
+package repository
 
 import (
 	"context"
@@ -19,6 +19,8 @@ type novelInterface interface {
 	ExistsByName(ctx context.Context, name string) (bool, error)
 	Insert(ctx context.Context, novel *entity.Novel) (*primitive.ObjectID, error)
 	Save(ctx context.Context, task *entity.Novel) (*primitive.ObjectID, error)
+
+	DeleteByIds(ctx context.Context, ids []*primitive.ObjectID) error
 }
 
 type novelDaoImpl struct{}
@@ -95,4 +97,18 @@ func (c *novelDaoImpl) Save(ctx context.Context, novel *entity.Novel) (*primitiv
 		_, err = collection.UpdateOne(ctx, bson.M{base.ColumId: novel.Id}, bson.M{"$set": doc})
 		return &novel.Id, err
 	}
+}
+
+func (c *novelDaoImpl) DeleteByIds(ctx context.Context, ids []*primitive.ObjectID) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	collection := system.GetSystem().GetCollection(base.CollectionNovelTask)
+	if collection == nil {
+		zap.L().Error("collection not found: " + base.CollectionNovelTask)
+		return errors.New("collection not found: " + base.CollectionNovelTask)
+	}
+
+	_, err := collection.DeleteMany(ctx, bson.M{base.ColumId: bson.M{"$in": ids}})
+	return err
 }

@@ -18,6 +18,7 @@ const (
 	ErrCatalogNotFound
 	ErrSiteNotFound
 	ErrExcludedNovel
+	ErrRequired
 )
 
 var errMap = map[ErrorCode]string{}
@@ -34,6 +35,7 @@ func init() {
 	errMap[ErrCatalogNotFound] = "catalog '%s' not found"
 	errMap[ErrSiteNotFound] = "site '%s' not found"
 	errMap[ErrExcludedNovel] = "excluded novel task submitted"
+	errMap[ErrRequired] = "%s is required"
 }
 
 func GetErrMessage(errCode ErrorCode, params ...any) string {
