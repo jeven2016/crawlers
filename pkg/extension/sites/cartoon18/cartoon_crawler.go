@@ -119,7 +119,7 @@ func (c CartoonCrawler) CrawlNovelPage(ctx context.Context, novelTask *entity.No
 	var novelId *primitive.ObjectID
 	var err error
 
-	if novelId, err = repository.NovelDao.FindIdByName(ctx, novel.Name); err != nil {
+	if novelId, err = repository.NovelRepo.FindIdByName(ctx, novel.Name); err != nil {
 		return nil, err
 	}
 
@@ -129,7 +129,7 @@ func (c CartoonCrawler) CrawlNovelPage(ctx context.Context, novelTask *entity.No
 		if novelId != nil {
 			novel.Id = *novelId
 		}
-		if novelId, err = repository.NovelDao.Save(ctx, &novel); err != nil {
+		if novelId, err = repository.NovelRepo.Save(ctx, &novel); err != nil {
 			return nil, err
 		}
 	}
@@ -171,7 +171,7 @@ func (c CartoonCrawler) CrawlChapterPage(ctx context.Context, chapterTask *entit
 	cly := c.colly.Clone()
 	zap.L().Info("Got chapter message", zap.String("url", chapterTask.Url))
 
-	if novel, err = repository.NovelDao.FindById(ctx, chapterTask.NovelId); err != nil {
+	if novel, err = repository.NovelRepo.FindById(ctx, chapterTask.NovelId); err != nil {
 		return err
 	}
 

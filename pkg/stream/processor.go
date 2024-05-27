@@ -103,7 +103,7 @@ func (d DefaultTaskProcessor) HandleCatalogPageTask(jsonData string) (novelMsgs 
 
 	//check if it exists in order to save or update in db
 	var existingTask *entity.CatalogPageTask
-	if existingTask, err = repository.CatalogPageTaskDao.FindByUrl(base.GetSystemContext(), catalogPageTask.Url); err != nil {
+	if existingTask, err = repository.CatalogPageTaskRepo.FindByUrl(base.GetSystemContext(), catalogPageTask.Url); err != nil {
 		zap.L().Error("failed to retrieve catalog page task", zap.String("jsonData", jsonData), zap.Error(err))
 		return nil
 	}
@@ -131,7 +131,7 @@ func (d DefaultTaskProcessor) HandleCatalogPageTask(jsonData string) (novelMsgs 
 	}
 
 	if !exists || !skipSaveIfPresent {
-		if _, err = repository.CatalogPageTaskDao.Save(base.GetSystemContext(), &catalogPageTask); err != nil {
+		if _, err = repository.CatalogPageTaskRepo.Save(base.GetSystemContext(), &catalogPageTask); err != nil {
 			zap.L().Error("failed to save catalogPageTask", zap.Error(err))
 		}
 	} else {
@@ -201,7 +201,7 @@ func (d DefaultTaskProcessor) HandleNovelTask(jsonData string) (chapterMessages 
 
 		//check if it exists in db
 		var existingTask *entity.NovelTask
-		if existingTask, err = repository.NovelTaskDao.FindByUrl(base.GetSystemContext(), novelTask.Url); err != nil {
+		if existingTask, err = repository.NovelTaskRepo.FindByUrl(base.GetSystemContext(), novelTask.Url); err != nil {
 			zap.L().Error("failed to retrieve novel page task", zap.String("jsonData", jsonData), zap.Error(err))
 			return nil
 		}
@@ -244,7 +244,7 @@ func (d DefaultTaskProcessor) HandleNovelTask(jsonData string) (chapterMessages 
 	}
 
 	if !exists || !skipSaveIfPresent {
-		if _, err = repository.NovelTaskDao.Save(base.GetSystemContext(), &novelTask); err != nil {
+		if _, err = repository.NovelTaskRepo.Save(base.GetSystemContext(), &novelTask); err != nil {
 			zap.L().Error("failed to save novelTask", zap.Error(err))
 		}
 	} else {
@@ -305,7 +305,7 @@ func (d DefaultTaskProcessor) HandleChapterTask(jsonData string) interface{} {
 
 	//check if it exists in db
 	var existingTask *entity.ChapterTask
-	if existingTask, err = repository.ChapterTaskDao.FindByUrl(base.GetSystemContext(), chapterTask.Url); err != nil {
+	if existingTask, err = repository.ChapterTaskRepo.FindByUrl(base.GetSystemContext(), chapterTask.Url); err != nil {
 		zap.L().Error("failed to retrieve chapter page task", zap.String("jsonData", jsonData), zap.Error(err))
 		return nil
 	}
@@ -349,7 +349,7 @@ func (d DefaultTaskProcessor) HandleChapterTask(jsonData string) interface{} {
 	//}
 
 	if (!exists || !skipSaveIfPresent) && enableChapter {
-		if _, err = repository.ChapterTaskDao.Save(base.GetSystemContext(), &chapterTask); err != nil {
+		if _, err = repository.ChapterTaskRepo.Save(base.GetSystemContext(), &chapterTask); err != nil {
 			zap.L().Error("failed to save chapterTask", zap.Error(err))
 		}
 	} else {
@@ -392,7 +392,7 @@ func isDuplicatedTask[T any](task *T, collectionName,
 	return false, err
 }
 
-func getSettingValue[T any](cfg *entity.SiteSetting, mapField, mapKey string, defaultValue T) T {
+func getSettingValue[T any](cfg *entity.SiteSettings, mapField, mapKey string, defaultValue T) T {
 	if cfg != nil && cfg.CrawlerSettings != nil {
 		s := structs.New(cfg.CrawlerSettings)
 

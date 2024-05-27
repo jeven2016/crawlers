@@ -27,7 +27,7 @@ type wucomicCrawler struct {
 	//redis       *cache.Redis
 	//mongoClient *db.Mongo
 	colly *colly.Collector
-	//siteCfg     *base.SiteSetting
+	//siteCfg     *base.SiteSettings
 	//client      *resty.Client
 	zhConvertor sat.Dicter
 }
@@ -104,7 +104,7 @@ func (c wucomicCrawler) CrawlNovelPage(ctx context.Context, novelTask *entity.No
 	var novelId *primitive.ObjectID
 	var err error
 
-	if novelId, err = repository.NovelDao.FindIdByName(ctx, novel.Name); err != nil {
+	if novelId, err = repository.NovelRepo.FindIdByName(ctx, novel.Name); err != nil {
 		return nil, err
 	}
 
@@ -114,7 +114,7 @@ func (c wucomicCrawler) CrawlNovelPage(ctx context.Context, novelTask *entity.No
 		if novelId != nil {
 			novel.Id = *novelId
 		}
-		if novelId, err = repository.NovelDao.Save(ctx, &novel); err != nil {
+		if novelId, err = repository.NovelRepo.Save(ctx, &novel); err != nil {
 			return nil, err
 		}
 	}
@@ -162,7 +162,7 @@ func (c wucomicCrawler) CrawlChapterPage(ctx context.Context, chapterTask *entit
 	cly := c.colly.Clone()
 	zap.L().Info("[wucomic] Got chapter message", zap.String("url", chapterTask.Url))
 
-	if novel, err = repository.NovelDao.FindById(ctx, chapterTask.NovelId); err != nil {
+	if novel, err = repository.NovelRepo.FindById(ctx, chapterTask.NovelId); err != nil {
 		return err
 	}
 

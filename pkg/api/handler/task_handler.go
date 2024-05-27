@@ -30,7 +30,7 @@ func (h *TaskHandler) FindTasksOfCatalogPage(c *gin.Context) {
 	if objectId == nil {
 		return
 	}
-	if catalogs, err := repository.CatalogPageTaskDao.FindTasksByCatalogId(c, *objectId); err != nil {
+	if catalogs, err := repository.CatalogPageTaskRepo.FindTasksByCatalogId(c, *objectId); err != nil {
 		zap.L().Warn("failed to find catalogPage tasks", zap.String("catalogId", catalogId), zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusInternalServerError,
 			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
@@ -47,7 +47,7 @@ func (h *TaskHandler) FindTasksOfNovel(c *gin.Context) {
 	if objectId == nil {
 		return
 	}
-	if novelTasks, err := repository.NovelTaskDao.FindByCatalogId(c, *objectId); err != nil {
+	if novelTasks, err := repository.NovelTaskRepo.FindByCatalogId(c, *objectId); err != nil {
 		zap.L().Warn("failed to find novel tasks", zap.String("catalogId", catalogId), zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusInternalServerError,
 			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
@@ -131,13 +131,13 @@ func (h *TaskHandler) getTaskEntity(c *gin.Context, catalogId primitive.ObjectID
 	var catalog *entity.Catalog
 	catalogStringId := catalogId.Hex()
 	siteStringId := catalogId.Hex()
-	if catalog, err = repository.CatalogDao.FindById(c, catalogId); err != nil {
+	if catalog, err = repository.CatalogRepo.FindById(c, catalogId); err != nil {
 		zap.L().Warn("catalog does not exist", zap.String("catalogId", catalogStringId), zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusBadRequest, base.FailsWithParams(base.ErrCatalogNotFound, catalogStringId))
 		hasError = true
 		return
 	}
-	if site, err = repository.SiteDao.FindById(c, catalog.SiteId); err != nil {
+	if site, err = repository.SiteRepo.FindById(c, catalog.SiteId); err != nil {
 		zap.L().Warn("site does not exist", zap.String("siteId", siteStringId), zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusBadRequest, base.FailsWithParams(base.ErrSiteNotFound, siteStringId))
 		hasError = true

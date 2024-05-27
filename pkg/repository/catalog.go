@@ -9,16 +9,16 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type catalogInterface interface {
+type catalogRepo interface {
 	FindCatalogsBySiteId(ctx context.Context, siteId primitive.ObjectID) ([]entity.Catalog, error)
 	FindById(ctx context.Context, id primitive.ObjectID) (*entity.Catalog, error)
 	ExistsById(ctx context.Context, id primitive.ObjectID) (bool, error)
 	ExistsByName(ctx context.Context, name string) (bool, error)
 }
 
-type catalogDaoImpl struct{}
+type catalogRepoImpl struct{}
 
-func (c *catalogDaoImpl) FindCatalogsBySiteId(ctx context.Context, siteId primitive.ObjectID) ([]entity.Catalog, error) {
+func (c *catalogRepoImpl) FindCatalogsBySiteId(ctx context.Context, siteId primitive.ObjectID) ([]entity.Catalog, error) {
 	findOpts := options.Find()
 	//findOpts.SetProjection(bson.M{base.ColumId: 1, base.ColumnName: 1, base.ColumnDisplayName: 1})
 	findOpts.SetLimit(1000)
@@ -32,17 +32,17 @@ func (c *catalogDaoImpl) FindCatalogsBySiteId(ctx context.Context, siteId primit
 	return catalogs, err
 }
 
-func (c *catalogDaoImpl) FindById(ctx context.Context, id primitive.ObjectID) (*entity.Catalog, error) {
+func (c *catalogRepoImpl) FindById(ctx context.Context, id primitive.ObjectID) (*entity.Catalog, error) {
 	return FindById(ctx, id, base.CollectionCatalog, &entity.Catalog{})
 }
 
-func (s *catalogDaoImpl) ExistsById(ctx context.Context, id primitive.ObjectID) (bool, error) {
+func (s *catalogRepoImpl) ExistsById(ctx context.Context, id primitive.ObjectID) (bool, error) {
 	site, err := FindById(ctx, id, base.CollectionCatalog, &entity.Site{},
 		&options.FindOneOptions{Projection: bson.M{base.ColumId: 1}})
 	return site != nil, err
 }
 
-func (s *catalogDaoImpl) ExistsByName(ctx context.Context, name string) (bool, error) {
+func (s *catalogRepoImpl) ExistsByName(ctx context.Context, name string) (bool, error) {
 	site, err := FindOneByFilter(ctx, bson.M{base.ColumnName: name}, base.CollectionCatalog, &entity.Site{},
 		&options.FindOneOptions{Projection: bson.M{base.ColumId: 1}})
 	return site != nil, err

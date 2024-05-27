@@ -49,6 +49,9 @@ func RegisterEndpoints(localeCfg gin.HandlerFunc) *gin.Engine {
 	routerGroup.GET("/sites/:siteId", siteHandler.FindSiteById)
 	routerGroup.DELETE("/sites/:siteId", siteHandler.DeleteSite)
 	routerGroup.GET("/sites/:siteId/catalogs", siteHandler.FindSiteCatalogs)
+
+	routerGroup.GET("/sites/:siteId/settings", siteHandler.FindSiteSettings)
+
 	routerGroup.GET("/tasks/catalog-pages", hd.FindTasksOfCatalogPage)
 	routerGroup.GET("/tasks/novels", hd.FindTasksOfNovel)
 

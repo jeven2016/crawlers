@@ -13,15 +13,15 @@ import (
 	"time"
 )
 
-type contentInterface interface {
+type contentRepo interface {
 	FindByParentIdAndPage(ctx context.Context, parentId *primitive.ObjectID, pageNo int) (*entity.Content, error)
 	Insert(ctx context.Context, content *entity.Content) (*primitive.ObjectID, error)
 	Save(ctx context.Context, novel *entity.Content) (*primitive.ObjectID, error)
 }
 
-type contentDaoImpl struct{}
+type contentRepoImpl struct{}
 
-func (c *contentDaoImpl) Insert(ctx context.Context, content *entity.Content) (*primitive.ObjectID, error) {
+func (c *contentRepoImpl) Insert(ctx context.Context, content *entity.Content) (*primitive.ObjectID, error) {
 	collection := system.GetSystem().GetCollection(base.CollectionContent)
 	//for creating
 	if !content.Id.IsZero() {
@@ -44,14 +44,14 @@ func (c *contentDaoImpl) Insert(ctx context.Context, content *entity.Content) (*
 	}
 }
 
-func (c *contentDaoImpl) FindByParentIdAndPage(ctx context.Context, parentId *primitive.ObjectID, pageNo int) (*entity.Content, error) {
+func (c *contentRepoImpl) FindByParentIdAndPage(ctx context.Context, parentId *primitive.ObjectID, pageNo int) (*entity.Content, error) {
 	task, err := FindOneByFilter(ctx, bson.M{base.ColumnParentId: parentId}, //TODO: common.ColumnPageNo: pageNo
 		base.CollectionContent, &entity.Content{},
 		&options.FindOneOptions{})
 	return task, err
 }
 
-func (c *contentDaoImpl) Save(ctx context.Context, content *entity.Content) (*primitive.ObjectID, error) {
+func (c *contentRepoImpl) Save(ctx context.Context, content *entity.Content) (*primitive.ObjectID, error) {
 	if content.Id.IsZero() {
 		//insert
 		return c.Insert(ctx, content)

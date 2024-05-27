@@ -13,15 +13,15 @@ import (
 	"time"
 )
 
-type novelTaskInterface interface {
+type novelTaskRepo interface {
 	FindByCatalogId(ctx context.Context, catalogId primitive.ObjectID) ([]entity.NovelTask, error)
 	FindByUrl(ctx context.Context, url string) (*entity.NovelTask, error)
 	Save(ctx context.Context, task *entity.NovelTask) (*primitive.ObjectID, error)
 }
 
-type novelTaskDaoImpl struct{}
+type novelTaskRepoImpl struct{}
 
-func (c *novelTaskDaoImpl) FindByCatalogId(ctx context.Context, catalogId primitive.ObjectID) ([]entity.NovelTask, error) {
+func (c *novelTaskRepoImpl) FindByCatalogId(ctx context.Context, catalogId primitive.ObjectID) ([]entity.NovelTask, error) {
 	findOpts := options.Find()
 	//findOpts.SetProjection(bson.M{base.ColumId: 1, base.ColumnName: 1, base.ColumnDisplayName: 1})
 	findOpts.SetLimit(1000)
@@ -35,12 +35,12 @@ func (c *novelTaskDaoImpl) FindByCatalogId(ctx context.Context, catalogId primit
 	return tasks, err
 }
 
-func (c *novelTaskDaoImpl) FindByUrl(ctx context.Context, url string) (*entity.NovelTask, error) {
+func (c *novelTaskRepoImpl) FindByUrl(ctx context.Context, url string) (*entity.NovelTask, error) {
 	task, err := FindOneByFilter(ctx, bson.M{base.ColumnUrl: url}, base.CollectionNovelTask, &entity.NovelTask{})
 	return task, err
 }
 
-func (c *novelTaskDaoImpl) Save(ctx context.Context, task *entity.NovelTask) (*primitive.ObjectID, error) {
+func (c *novelTaskRepoImpl) Save(ctx context.Context, task *entity.NovelTask) (*primitive.ObjectID, error) {
 	collection := system.GetSystem().GetCollection(base.CollectionNovelTask)
 	if collection == nil {
 		zap.L().Error("collection not found: " + base.CollectionNovelTask)

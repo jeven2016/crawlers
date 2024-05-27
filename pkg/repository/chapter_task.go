@@ -13,19 +13,19 @@ import (
 	"time"
 )
 
-type chapterTaskInterface interface {
+type chapterTaskRepo interface {
 	FindByUrl(ctx context.Context, url string) (*entity.ChapterTask, error)
 	Save(ctx context.Context, task *entity.ChapterTask) (*primitive.ObjectID, error)
 }
 
-type chapterTaskDaoImpl struct{}
+type chapterTaskRepoImpl struct{}
 
-func (c *chapterTaskDaoImpl) FindByUrl(ctx context.Context, url string) (*entity.ChapterTask, error) {
+func (c *chapterTaskRepoImpl) FindByUrl(ctx context.Context, url string) (*entity.ChapterTask, error) {
 	task, err := FindOneByFilter(ctx, bson.M{base.ColumnUrl: url}, base.CollectionChapterTask, &entity.ChapterTask{})
 	return task, err
 }
 
-func (c *chapterTaskDaoImpl) Save(ctx context.Context, task *entity.ChapterTask) (*primitive.ObjectID, error) {
+func (c *chapterTaskRepoImpl) Save(ctx context.Context, task *entity.ChapterTask) (*primitive.ObjectID, error) {
 	collection := system.GetSystem().GetCollection(base.CollectionChapterTask)
 	if collection == nil {
 		zap.L().Error("collection not found: " + base.CollectionChapterTask)

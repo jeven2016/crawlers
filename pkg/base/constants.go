@@ -31,6 +31,7 @@ const (
 	ColumnNovelId     = "novelId"
 	ColumnParentId    = "parentId"
 	ColumnPageNo      = "page"
+	ColumnSiteId      = "siteId"
 
 	//for catalog
 	ColumnsiteId = "siteId"
@@ -41,6 +42,7 @@ const (
 // db collection
 const (
 	CollectionSite            = "site"
+	CollectionSiteSettings    = "siteSettings"
 	CollectionCatalog         = "catalog"
 	CollectionNovel           = "novel"
 	CollectionNovelTask       = "novelTask"

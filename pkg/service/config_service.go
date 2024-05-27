@@ -18,18 +18,18 @@ type ConfigServiceInterface interface {
 	GetConfig() *InternalConfig
 	LoadInternalConfig(yamlConfig string, extraConfigFile *string) error
 	MergeConfig()
-	GetSiteConfig(siteKey string) *entity.SiteSetting
+	GetSiteConfig(siteName string) *entity.SiteSettings
 }
 
 type configServiceImpl struct {
 	internalCfg   *InternalConfig
-	siteConfigMap map[string]*entity.SiteSetting
+	siteConfigMap map[string]*entity.SiteSettings
 }
 
 func NewConfigService() ConfigServiceInterface {
 	return &configServiceImpl{
 		internalCfg:   nil,
-		siteConfigMap: map[string]*entity.SiteSetting{},
+		siteConfigMap: map[string]*entity.SiteSettings{},
 	}
 }
 
@@ -41,25 +41,25 @@ func NewConfigService() ConfigServiceInterface {
 // siteKey (string): The unique identifier for the site.
 //
 // Returns:
-// *entity.SiteSetting: A pointer to the site configuration. If an error occurs during retrieval or creation, it returns nil.
-func (c *configServiceImpl) GetSiteConfig(siteKey string) *entity.SiteSetting {
+// *entity.SiteSettings: A pointer to the site configuration. If an error occurs during retrieval or creation, it returns nil.
+func (c *configServiceImpl) GetSiteConfig(siteName string) *entity.SiteSettings {
 	// Check if the site configuration is present in the internal configuration
-	cfg, ok := slice.FindBy(c.internalCfg.WebSites, func(index int, item entity.SiteSetting) bool {
-		return item.Name == siteKey
+	cfg, ok := slice.FindBy(c.internalCfg.WebSites, func(index int, item entity.SiteSettings) bool {
+		return item.Name == siteName
 	})
 	if ok {
 		return &cfg
 	}
 
 	// Generate the Redis key for the site configuration
-	siteConfigKey := utils.GenKey("siteConfig", siteKey)
+	siteConfigKey := utils.GenKey("siteConfig", siteName)
 
 	// Attempt to retrieve the site configuration from Redis
 	value, err := system.GetSystem().RedisClient.Client.Get(context.Background(), siteConfigKey).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
 			// If the configuration is not found in Redis, create a default configuration
-			defaultSetting := c.createDefaultSiteSettings(siteKey)
+			defaultSetting := c.createDefaultSiteSettings(siteName)
 
 			// Marshal the default configuration to a byte array
 			b, err := msgpack.Marshal(defaultSetting)
@@ -80,7 +80,7 @@ func (c *configServiceImpl) GetSiteConfig(siteKey string) *entity.SiteSetting {
 		return nil
 	} else {
 		// If the configuration is found in Redis, unmarshal it from the byte array
-		defaultSetting := &entity.SiteSetting{}
+		defaultSetting := &entity.SiteSettings{}
 		if err = msgpack.Unmarshal([]byte(value), defaultSetting); err != nil {
 			zap.L().Warn("failed to unmarshal", zap.Error(err))
 			return nil
@@ -91,8 +91,8 @@ func (c *configServiceImpl) GetSiteConfig(siteKey string) *entity.SiteSetting {
 	}
 }
 
-func (c *configServiceImpl) createDefaultSiteSettings(siteKey string) *entity.SiteSetting {
-	defaultSetting := &entity.SiteSetting{
+func (c *configServiceImpl) createDefaultSiteSettings(siteKey string) *entity.SiteSettings {
+	defaultSetting := &entity.SiteSettings{
 		Name:          siteKey + "_default",
 		RegexSettings: &entity.RegexSettings{},
 		MongoCollections: &entity.MongoCollections{

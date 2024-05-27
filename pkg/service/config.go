@@ -8,5 +8,5 @@ import (
 type InternalConfig struct {
 	config.ServerConfig `koanf:",squash"`
 	CrawlerSettings     *entity.CrawlerSettings `koanf:"crawlerSettings"`
-	WebSites            []entity.SiteSetting    `koanf:"webSites"`
+	WebSites            []entity.SiteSettings   `koanf:"webSites"`
 }

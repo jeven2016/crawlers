@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-type chapterInterface interface {
+type chapterRepo interface {
 	FindByName(ctx context.Context, name string) (*entity.Chapter, error)
 	ExistsByName(ctx context.Context, name string) (bool, error)
 	Insert(ctx context.Context, novel *entity.Chapter) (*primitive.ObjectID, error)
@@ -21,9 +21,9 @@ type chapterInterface interface {
 	Save(ctx context.Context, novel *entity.Chapter) (*primitive.ObjectID, error)
 }
 
-type chapterDaoImpl struct{}
+type chapterRepoImpl struct{}
 
-func (n *chapterDaoImpl) FindByName(ctx context.Context, name string) (*entity.Chapter, error) {
+func (n *chapterRepoImpl) FindByName(ctx context.Context, name string) (*entity.Chapter, error) {
 	chapter, err := FindOneByFilter(ctx, bson.M{base.ColumnName: name}, base.CollectionChapter, &entity.Chapter{},
 		&options.FindOneOptions{})
 	if err != nil || chapter == nil {
@@ -32,13 +32,13 @@ func (n *chapterDaoImpl) FindByName(ctx context.Context, name string) (*entity.C
 	return chapter, err
 }
 
-func (n *chapterDaoImpl) ExistsByName(ctx context.Context, name string) (bool, error) {
+func (n *chapterRepoImpl) ExistsByName(ctx context.Context, name string) (bool, error) {
 	task, err := FindOneByFilter(ctx, bson.M{base.ColumnName: name}, base.CollectionChapter, &entity.Chapter{},
 		&options.FindOneOptions{Projection: bson.M{base.ColumId: 1}})
 	return task != nil, err
 }
 
-func (n *chapterDaoImpl) Insert(ctx context.Context, novel *entity.Chapter) (*primitive.ObjectID, error) {
+func (n *chapterRepoImpl) Insert(ctx context.Context, novel *entity.Chapter) (*primitive.ObjectID, error) {
 	collection := system.GetSystem().GetCollection(base.CollectionChapter)
 	//for creating
 	if !novel.Id.IsZero() {
@@ -61,7 +61,7 @@ func (n *chapterDaoImpl) Insert(ctx context.Context, novel *entity.Chapter) (*pr
 	}
 }
 
-func (n *chapterDaoImpl) Save(ctx context.Context, chapter *entity.Chapter) (*primitive.ObjectID, error) {
+func (n *chapterRepoImpl) Save(ctx context.Context, chapter *entity.Chapter) (*primitive.ObjectID, error) {
 	if chapter.Id.IsZero() {
 		//insert
 		return n.Insert(ctx, chapter)
@@ -88,7 +88,7 @@ func (n *chapterDaoImpl) Save(ctx context.Context, chapter *entity.Chapter) (*pr
 	}
 }
 
-func (n *chapterDaoImpl) BulkInsert(ctx context.Context, chapters []*entity.Chapter, novelId *primitive.ObjectID) error {
+func (n *chapterRepoImpl) BulkInsert(ctx context.Context, chapters []*entity.Chapter, novelId *primitive.ObjectID) error {
 	collection := system.GetSystem().GetCollection(base.CollectionChapter)
 
 	documents := make([]interface{}, len(chapters))

@@ -1,38 +1,38 @@
 package repository
 
-var CatalogDao catalogInterface
-var SiteDao siteInterface
-var CatalogPageTaskDao catalogPageTaskInterface
-var NovelTaskDao novelTaskInterface
-var NovelDao novelInterface
-var ChapterDao chapterInterface
-var ChapterTaskDao chapterTaskInterface
-var ContentDao contentInterface
+var CatalogRepo catalogRepo
+var SiteRepo siteRepo
+var CatalogPageTaskRepo catalogPageTaskRepo
+var NovelTaskRepo novelTaskRepo
+var NovelRepo novelRepo
+var ChapterRepo chapterRepo
+var ChapterTaskRepo chapterTaskRepo
+var ContentRepo contentRepo
 
 // InitRepositories initializes all the repository interfaces with their respective implementations.
 // This function should be called once during the application startup to ensure all repositories are ready for use.
 func InitRepositories() {
-	// Initialize CatalogDao with catalogDaoImpl struct
-	CatalogDao = &catalogDaoImpl{}
+	// Initialize CatalogRepo with catalogRepoImpl struct
+	CatalogRepo = &catalogRepoImpl{}
 
-	// Initialize SiteDao with siteDaoImpl struct
-	SiteDao = &siteDaoImpl{}
+	// Initialize SiteRepo with siteRepoImpl struct
+	SiteRepo = &siteRepoImpl{}
 
-	// Initialize CatalogPageTaskDao with catalogPageTaskDaoImpl struct
-	CatalogPageTaskDao = &catalogPageTaskDaoImpl{}
+	// Initialize CatalogPageTaskRepo with catalogPageTaskRepoImpl struct
+	CatalogPageTaskRepo = &catalogPageTaskRepoImpl{}
 
-	// Initialize NovelTaskDao with novelTaskDaoImpl struct
-	NovelTaskDao = &novelTaskDaoImpl{}
+	// Initialize NovelTaskRepo with novelTaskRepoImpl struct
+	NovelTaskRepo = &novelTaskRepoImpl{}
 
-	// Initialize NovelDao with novelDaoImpl struct
-	NovelDao = &novelDaoImpl{}
+	// Initialize NovelRepo with novelRepoImpl struct
+	NovelRepo = &novelRepoImpl{}
 
-	// Initialize ChapterDao with chapterDaoImpl struct
-	ChapterDao = &chapterDaoImpl{}
+	// Initialize ChapterRepo with chapterRepoImpl struct
+	ChapterRepo = &chapterRepoImpl{}
 
-	// Initialize ChapterTaskDao with chapterTaskDaoImpl struct
-	ChapterTaskDao = &chapterTaskDaoImpl{}
+	// Initialize ChapterTaskRepo with chapterTaskRepoImpl struct
+	ChapterTaskRepo = &chapterTaskRepoImpl{}
 
-	// Initialize ContentDao with contentDaoImpl struct
-	ContentDao = &contentDaoImpl{}
+	// Initialize ContentRepo with contentRepoImpl struct
+	ContentRepo = &contentRepoImpl{}
 }

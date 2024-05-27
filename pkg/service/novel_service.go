@@ -28,6 +28,6 @@ func (s *novelServiceImpl) DeleteByIds(ctx context.Context, ids []string) error 
 		}
 		objectIdArray = append(objectIdArray, &objectId)
 	}
-	err := repository.NovelDao.DeleteByIds(ctx, objectIdArray)
+	err := repository.NovelRepo.DeleteByIds(ctx, objectIdArray)
 	return err
 }

@@ -20,7 +20,7 @@ type NsfCrawler struct {
 	//redis       *cache.Redis
 	//mongoClient *db.Mongo
 	colly *colly.Collector
-	//siteCfg     *base.SiteSetting
+	//siteCfg     *base.SiteSettings
 	//client      *resty.Client
 	zhConvertor sat.Dicter
 }
@@ -130,7 +130,7 @@ func (n *NsfCrawler) CrawlNovelPage(ctx context.Context, novelTask *entity.Novel
 	var novelId *primitive.ObjectID
 	var err error
 
-	if novelId, err = repository.NovelDao.FindIdByName(ctx, novel.Name); err != nil {
+	if novelId, err = repository.NovelRepo.FindIdByName(ctx, novel.Name); err != nil {
 		return nil, err
 	}
 
@@ -140,7 +140,7 @@ func (n *NsfCrawler) CrawlNovelPage(ctx context.Context, novelTask *entity.Novel
 		if novelId != nil {
 			novel.Id = *novelId
 		}
-		if novelId, err = repository.NovelDao.Save(ctx, &novel); err != nil {
+		if novelId, err = repository.NovelRepo.Save(ctx, &novel); err != nil {
 			return nil, err
 		}
 	}
@@ -186,7 +186,7 @@ func (n *NsfCrawler) CrawlChapterPage(ctx context.Context, chapterTask *entity.C
 	var chapterId *primitive.ObjectID
 
 	// for chapter
-	existingChapter, err := repository.ChapterDao.FindByName(ctx, chapterTask.Name)
+	existingChapter, err := repository.ChapterRepo.FindByName(ctx, chapterTask.Name)
 	if err != nil {
 		return
 	}
@@ -206,14 +206,14 @@ func (n *NsfCrawler) CrawlChapterPage(ctx context.Context, chapterTask *entity.C
 
 	//todo
 	if !skipSaveIfPresent || chapterId == nil || (*chapterId).IsZero() {
-		if chapterId, err = repository.ChapterDao.Save(ctx, existingChapter); err != nil {
+		if chapterId, err = repository.ChapterRepo.Save(ctx, existingChapter); err != nil {
 			return
 		}
 	}
 
 	//for content
 	//page for chapters, need an enhancement
-	existingContent, err := repository.ContentDao.FindByParentIdAndPage(ctx, chapterId, 0)
+	existingContent, err := repository.ContentRepo.FindByParentIdAndPage(ctx, chapterId, 0)
 	if err != nil {
 		return
 	}
@@ -235,7 +235,7 @@ func (n *NsfCrawler) CrawlChapterPage(ctx context.Context, chapterTask *entity.C
 	}
 
 	if !skipSaveIfPresent || existingContent == nil || existingContent.Id.IsZero() {
-		_, err = repository.ContentDao.Save(ctx, existingContent)
+		_, err = repository.ContentRepo.Save(ctx, existingContent)
 	}
 	return
 }

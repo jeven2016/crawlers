@@ -1,7 +1,5 @@
 package base
 
-import "fmt"
-
 type ErrorCode int
 
 const (
@@ -36,12 +34,4 @@ func init() {
 	errMap[ErrSiteNotFound] = "site '%s' not found"
 	errMap[ErrExcludedNovel] = "excluded novel task submitted"
 	errMap[ErrRequired] = "%s is required"
-}
-
-func GetErrMessage(errCode ErrorCode, params ...any) string {
-	if val, ok := errMap[errCode]; ok {
-		return fmt.Sprintf(val, params...)
-	}
-	return errMap[ErrCodeUnknown]
-
 }

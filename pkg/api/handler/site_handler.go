@@ -5,6 +5,7 @@ import (
 	"crawlers/pkg/model/dto"
 	"crawlers/pkg/model/entity"
 	"crawlers/pkg/repository"
+	"crawlers/pkg/service"
 	"github.com/gin-gonic/gin"
 	"github.com/jeven2016/mylibs/system"
 	"github.com/jeven2016/mylibs/utils"
@@ -22,7 +23,7 @@ func NewSiteHandler() *SiteHandler {
 }
 
 func (h *SiteHandler) FindSites(c *gin.Context) {
-	if sites, err := repository.SiteDao.FindSites(c); err != nil {
+	if sites, err := repository.SiteRepo.FindSites(c); err != nil {
 		zap.L().Warn("failed to find sites", zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusInternalServerError,
 			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
@@ -38,13 +39,71 @@ func (h *SiteHandler) FindSiteCatalogs(c *gin.Context) {
 	if siteObjectId == nil {
 		return
 	}
-	if catalogs, err := repository.CatalogDao.FindCatalogsBySiteId(c, *siteObjectId); err != nil {
+	if catalogs, err := repository.CatalogRepo.FindCatalogsBySiteId(c, *siteObjectId); err != nil {
 		zap.L().Warn("failed to find catalogs", zap.String("siteId", siteId), zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusInternalServerError,
 			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
 		return
 	} else {
 		c.JSON(http.StatusOK, catalogs)
+	}
+}
+
+func (h *SiteHandler) FindSiteSettings(c *gin.Context) {
+	siteId := c.Param("siteId")
+	siteObjectId := ensureValidId(c, siteId)
+	if siteObjectId == nil {
+		return
+	}
+	site, err := service.SiteService.FindById(c, *siteObjectId)
+	if err != nil {
+		zap.L().Warn("failed to find site", zap.String("siteId", siteId), zap.Error(err))
+		c.AbortWithStatusJSON(http.StatusInternalServerError,
+			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
+		return
+	}
+	if site == nil {
+		c.Status(http.StatusNotFound)
+		return
+	}
+
+	settings := service.ConfigService.GetConfig().CrawlerSettings
+	if siteSettings, err := service.SiteService.FindSettings(c, *siteObjectId); err != nil {
+		zap.L().Warn("failed to find site settings", zap.String("siteId", siteId), zap.Error(err))
+		c.AbortWithStatusJSON(http.StatusInternalServerError,
+			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
+		return
+	} else {
+		if siteSettings == nil {
+			c.Status(http.StatusNotFound)
+			return
+		}
+		c.JSON(http.StatusOK, siteSettings)
+	}
+}
+
+func (h *SiteHandler) SaveSiteSettings(c *gin.Context) {
+	siteId := c.Param("siteId")
+	siteObjectId := ensureValidId(c, siteId)
+	if siteObjectId == nil {
+		return
+	}
+	var siteSettings entity.SiteSettings
+	if !bindJson(c, &siteSettings) {
+		return
+	}
+
+	if siteSettings, err := service.SiteService.SaveSettings(c, &siteSettings); err != nil {
+		zap.L().Warn("failed to find site settings", zap.String("siteId", siteId), zap.Error(err))
+		c.AbortWithStatusJSON(http.StatusInternalServerError,
+			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
+		return
+	} else {
+		if siteSettings == nil {
+			c.Status(http.StatusNotFound)
+			return
+		}
+		c.JSON(http.StatusOK, siteSettings)
 	}
 }
 
@@ -84,7 +143,7 @@ func (h *SiteHandler) DeleteSite(c *gin.Context) {
 	if objectId == nil {
 		return
 	}
-	if err := repository.SiteDao.DeleteById(c, *objectId); err != nil {
+	if err := repository.SiteRepo.DeleteById(c, *objectId); err != nil {
 		zap.L().Warn("failed to delete site", zap.String("siteId", siteId), zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusInternalServerError,
 			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
@@ -98,7 +157,7 @@ func (h *SiteHandler) DeleteSite(c *gin.Context) {
 func (h *SiteHandler) ensureValidSiteId(c *gin.Context, siteId string) *primitive.ObjectID {
 	objectId := ensureValidId(c, siteId)
 	if objectId != nil {
-		siteExists, err := repository.SiteDao.ExistsById(c, *objectId)
+		siteExists, err := repository.SiteRepo.ExistsById(c, *objectId)
 		if !siteExists || err != nil {
 			zap.L().Warn("site does not exist", zap.String("siteId", siteId), zap.Error(err))
 			c.AbortWithStatusJSON(http.StatusBadRequest, base.FailsWithParams(base.ErrSiteNotFound, siteId))
@@ -130,7 +189,7 @@ func (h *SiteHandler) CreateCatalog(c *gin.Context) {
 
 	//check if the site exists and cache the result
 	exists, err := utils.Exists(c, utils.GenKey(base.SiteKeyExistsPrefix, catalog.SiteId.Hex()), func() (any, error) {
-		return repository.SiteDao.ExistsById(c, catalog.SiteId)
+		return repository.SiteRepo.ExistsById(c, catalog.SiteId)
 	})
 	if err != nil {
 		zap.L().Warn("failed to check if any sites exist with this siteId", zap.String("siteId", catalog.SiteId.Hex()),
@@ -160,7 +219,7 @@ func (h *SiteHandler) doCreate(c *gin.Context, req *dto.CreateRequest) {
 	col := system.GetSystem().GetCollection(req.Collection)
 
 	exists, err := utils.Exists(c, req.RedisCacheKey, func() (any, error) {
-		return repository.CatalogDao.ExistsByName(c, req.Name)
+		return repository.CatalogRepo.ExistsByName(c, req.Name)
 	})
 	if err != nil {
 		zap.L().Warn("failed to check if it exists", zap.Error(err), zap.Any("request", req.Entity))
@@ -203,7 +262,7 @@ func (h *SiteHandler) FindSiteById(c *gin.Context) {
 		return
 	}
 
-	if site, err := repository.SiteDao.FindById(c, *objectId); err != nil {
+	if site, err := repository.SiteRepo.FindById(c, *objectId); err != nil {
 		zap.L().Warn("failed to find site", zap.String("siteId", siteId), zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusInternalServerError,
 			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
@@ -227,7 +286,7 @@ func (h *SiteHandler) FindCatalogById(c *gin.Context) {
 	objectId := ensureValidId(c, catalogId)
 
 	if objectId != nil {
-		if catalog, err := repository.CatalogDao.FindById(c, *objectId); err != nil {
+		if catalog, err := repository.CatalogRepo.FindById(c, *objectId); err != nil {
 			zap.L().Warn("failed to find catalog", zap.String("catalogId", catalogId), zap.Error(err))
 			c.AbortWithStatusJSON(http.StatusInternalServerError,
 				base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))

@@ -122,7 +122,7 @@ func (c Aipic) CrawlNovelPage(ctx context.Context, novelTask *entity.NovelTask, 
 	var novelId *primitive.ObjectID
 	var err error
 
-	if novelId, err = repository.NovelDao.FindIdByName(ctx, novel.Name); err != nil {
+	if novelId, err = repository.NovelRepo.FindIdByName(ctx, novel.Name); err != nil {
 		return nil, err
 	}
 
@@ -131,7 +131,7 @@ func (c Aipic) CrawlNovelPage(ctx context.Context, novelTask *entity.NovelTask, 
 		if novelId != nil {
 			novel.Id = *novelId
 		}
-		if novelId, err = repository.NovelDao.Save(ctx, &novel); err != nil {
+		if novelId, err = repository.NovelRepo.Save(ctx, &novel); err != nil {
 			return nil, err
 		}
 	}

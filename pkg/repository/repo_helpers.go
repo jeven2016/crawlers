@@ -17,6 +17,11 @@ func FindById[T any](ctx context.Context, id primitive.ObjectID, collection stri
 	return FindOneByFilter(ctx, bson.M{base.ColumId: id}, collection, obj, opts...)
 }
 
+func FindByColumn[T any](ctx context.Context, column string, columnValue any, collection string,
+	obj *T, opts ...*options.FindOneOptions) (*T, error) {
+	return FindOneByFilter(ctx, bson.M{column: columnValue}, collection, obj, opts...)
+}
+
 func DeleteById(ctx context.Context, id primitive.ObjectID, collection string,
 	opts ...*options.DeleteOptions) error {
 	col := system.GetSystem().GetCollection(collection)

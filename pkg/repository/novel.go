@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-type novelInterface interface {
+type novelRepo interface {
 	FindById(ctx context.Context, id primitive.ObjectID) (*entity.Novel, error)
 	FindIdByName(ctx context.Context, name string) (*primitive.ObjectID, error)
 	ExistsByName(ctx context.Context, name string) (bool, error)
@@ -23,9 +23,9 @@ type novelInterface interface {
 	DeleteByIds(ctx context.Context, ids []*primitive.ObjectID) error
 }
 
-type novelDaoImpl struct{}
+type novelRepoImpl struct{}
 
-func (n *novelDaoImpl) FindById(ctx context.Context, id primitive.ObjectID) (*entity.Novel, error) {
+func (n *novelRepoImpl) FindById(ctx context.Context, id primitive.ObjectID) (*entity.Novel, error) {
 	novel, err := FindOneByFilter(ctx, bson.M{base.ColumId: id}, base.CollectionNovel, &entity.Novel{},
 		&options.FindOneOptions{})
 	if err != nil || novel == nil {
@@ -34,7 +34,7 @@ func (n *novelDaoImpl) FindById(ctx context.Context, id primitive.ObjectID) (*en
 	return novel, err
 }
 
-func (n *novelDaoImpl) FindIdByName(ctx context.Context, name string) (*primitive.ObjectID, error) {
+func (n *novelRepoImpl) FindIdByName(ctx context.Context, name string) (*primitive.ObjectID, error) {
 	novel, err := FindOneByFilter(ctx, bson.M{base.ColumnName: name}, base.CollectionNovel, &entity.Novel{},
 		&options.FindOneOptions{Projection: bson.M{base.ColumId: 1}})
 	if err != nil || novel == nil {
@@ -43,13 +43,13 @@ func (n *novelDaoImpl) FindIdByName(ctx context.Context, name string) (*primitiv
 	return &novel.Id, err
 }
 
-func (n *novelDaoImpl) ExistsByName(ctx context.Context, name string) (bool, error) {
+func (n *novelRepoImpl) ExistsByName(ctx context.Context, name string) (bool, error) {
 	novel, err := FindOneByFilter(ctx, bson.M{base.ColumnName: name}, base.CollectionNovel, &entity.Novel{},
 		&options.FindOneOptions{Projection: bson.M{base.ColumId: 1}})
 	return novel != nil, err
 }
 
-func (n *novelDaoImpl) Insert(ctx context.Context, novel *entity.Novel) (*primitive.ObjectID, error) {
+func (n *novelRepoImpl) Insert(ctx context.Context, novel *entity.Novel) (*primitive.ObjectID, error) {
 	collection := system.GetSystem().GetCollection(base.CollectionNovel)
 	//for creating
 	if !novel.Id.IsZero() {
@@ -72,7 +72,7 @@ func (n *novelDaoImpl) Insert(ctx context.Context, novel *entity.Novel) (*primit
 	}
 }
 
-func (c *novelDaoImpl) Save(ctx context.Context, novel *entity.Novel) (*primitive.ObjectID, error) {
+func (c *novelRepoImpl) Save(ctx context.Context, novel *entity.Novel) (*primitive.ObjectID, error) {
 	if novel.Id.IsZero() {
 		//insert
 		return c.Insert(ctx, novel)
@@ -99,7 +99,7 @@ func (c *novelDaoImpl) Save(ctx context.Context, novel *entity.Novel) (*primitiv
 	}
 }
 
-func (c *novelDaoImpl) DeleteByIds(ctx context.Context, ids []*primitive.ObjectID) error {
+func (c *novelRepoImpl) DeleteByIds(ctx context.Context, ids []*primitive.ObjectID) error {
 	if len(ids) == 0 {
 		return nil
 	}
