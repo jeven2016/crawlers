@@ -1,37 +1,27 @@
 package base
 
-type ErrorCode int
+// ErrorCode Error represents an error returned from the server
+var ErrorCode *errorCodeInfo
 
-const (
-	ErrCodeUnknown ErrorCode = 0
-	ErrCodeOK      ErrorCode = 200
+// errorCodeInfo error code information
+type errorCodeInfo struct {
+	Unknown int
+	OK      int
 
-	NotFound ErrorCode = 1000 + iota
-	ErrCodeUnSupportedCatalog
-	ErrCodePageUrlRequired
-	ErrCodeTaskSubmitted
-	ErrPublishMessage
-	ErrParsePageUrl
-	ErrDuplicated
-	ErrCatalogNotFound
-	ErrSiteNotFound
-	ErrExcludedNovel
-	ErrRequired
-)
-
-var errMap = map[ErrorCode]string{}
+	NotFound   int
+	Unexpected int
+	Required   int
+	Duplicated int
+}
 
 func init() {
-	errMap[ErrCodeUnknown] = "unexpected error occurred"
-	errMap[NotFound] = "not found"
-	errMap[ErrCodeUnSupportedCatalog] = "unsupported catalog '%s'"
-	errMap[ErrCodePageUrlRequired] = "pageUrl is required"
-	errMap[ErrCodeTaskSubmitted] = "a task is already submitted"
-	errMap[ErrPublishMessage] = "failed to publish the message, reason: %s"
-	errMap[ErrParsePageUrl] = "failed to parse the page testUrl, reason: %s"
-	errMap[ErrDuplicated] = "it's duplicated to save with %v(%v)"
-	errMap[ErrCatalogNotFound] = "catalog '%s' not found"
-	errMap[ErrSiteNotFound] = "site '%s' not found"
-	errMap[ErrExcludedNovel] = "excluded novel task submitted"
-	errMap[ErrRequired] = "%s is required"
+	ErrorCode = &errorCodeInfo{
+		OK:      100,
+		Unknown: 101,
+
+		NotFound:   1000,
+		Unexpected: 1002,
+		Required:   1003,
+		Duplicated: 1004,
+	}
 }

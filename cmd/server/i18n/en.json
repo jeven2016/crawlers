@@ -1,1 +1,7 @@
 
+{
+  "1001": "not found",
+  "1002": "unexpected error occurred",
+  "1003": "{{ .name }} is required",
+  "1004": "'{{ .name }}' is duplicated"
+}
