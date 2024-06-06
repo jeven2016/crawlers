@@ -13,6 +13,8 @@ https://github.com/darccio/mergo
 
 
 //参考的框架
+https://github.com/gotify/server/blob/master/router/router.go
+
 https://blog.csdn.net/weixin_41853064/article/details/134284378
 
 https://github.com/go-co-op/gocron?utm_campaign=awesomego&utm_medium=referral&utm_source=awesomego

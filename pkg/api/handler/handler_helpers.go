@@ -14,7 +14,7 @@ func bindJson(c *gin.Context, obj any) bool {
 		//自定义error， https://juejin.cn/post/7015517416608235534
 		zap.L().Warn("failed to convert json", zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusBadRequest,
-			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
+			base.FailsWithError(c, err))
 		return false
 	}
 	return true
@@ -24,14 +24,14 @@ func ensureValidId(c *gin.Context, id string) *primitive.ObjectID {
 	if id == "" {
 		zap.L().Warn("invalid id", zap.String("id", id))
 		c.AbortWithStatusJSON(http.StatusBadRequest,
-			base.FailsWithParams(base.ErrSiteNotFound, id))
+			base.FailsWithParams(c, base.ErrorCode.Required, map[string]string{"name": "id"}))
 		return nil
 	}
 	objectId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		zap.L().Warn("invalid id", zap.String("id", id), zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusBadRequest,
-			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
+			base.FailsWithMessage(base.ErrorCode.Unexpected, err.Error()))
 		return nil
 	}
 	return &objectId

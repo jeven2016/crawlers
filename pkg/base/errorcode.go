@@ -5,23 +5,35 @@ var ErrorCode *errorCodeInfo
 
 // errorCodeInfo error code information
 type errorCodeInfo struct {
-	Unknown int
-	OK      int
+	OK int
 
 	NotFound   int
 	Unexpected int
+	BadRequest int
 	Required   int
 	Duplicated int
+
+	SiteNotFound          int
+	ProcessorNotFound     int
+	IllegalPageUrl        int
+	ExcludedNovelPageTask int
+	IdsRequired           int
 }
 
 func init() {
 	ErrorCode = &errorCodeInfo{
-		OK:      100,
-		Unknown: 101,
+		OK:         200,
+		NotFound:   404,
+		Unexpected: 500,
+		BadRequest: 400,
 
-		NotFound:   1000,
-		Unexpected: 1002,
 		Required:   1003,
 		Duplicated: 1004,
+
+		SiteNotFound:          1100,
+		ProcessorNotFound:     1101,
+		IllegalPageUrl:        1102,
+		ExcludedNovelPageTask: 1103,
+		IdsRequired:           1104,
 	}
 }

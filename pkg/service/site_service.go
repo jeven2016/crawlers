@@ -1,19 +1,22 @@
 package service
 
 import (
-	"context"
+	"crawlers/pkg/base"
 	"crawlers/pkg/model/entity"
 	"crawlers/pkg/repository"
+	"fmt"
+	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.uber.org/zap"
 )
 
 type SiteServiceInterface interface {
-	FindSites(ctx context.Context) ([]entity.Site, error)
-	FindById(ctx context.Context, id primitive.ObjectID) (*entity.Site, error)
-	ExistsById(ctx context.Context, id primitive.ObjectID) (bool, error)
-	DeleteById(ctx context.Context, id primitive.ObjectID) error
-	FindSettings(ctx context.Context, siteId primitive.ObjectID) (*entity.SiteSettings, error)
-	SaveSettings(ctx context.Context, siteSettings *entity.SiteSettings) (*entity.SiteSettings, error)
+	FindSites(ctx *gin.Context) ([]entity.Site, *base.AppError)
+	FindById(ctx *gin.Context, id primitive.ObjectID) (*entity.Site, error)
+	ExistsById(ctx *gin.Context, id primitive.ObjectID) (bool, error)
+	DeleteById(ctx *gin.Context, id primitive.ObjectID) error
+	FindSettings(ctx *gin.Context, siteId primitive.ObjectID) (*entity.SiteSettings, *base.AppError)
+	SaveSettings(ctx *gin.Context, siteSettings *entity.SiteSettings) (*entity.SiteSettings, error)
 }
 
 type siteServiceImpl struct {
@@ -23,31 +26,49 @@ func NewSiteService() SiteServiceInterface {
 	return &siteServiceImpl{}
 }
 
-func (s siteServiceImpl) FindSites(ctx context.Context) ([]entity.Site, error) {
-	return repository.SiteRepo.FindSites(ctx)
+func (s siteServiceImpl) FindSites(ctx *gin.Context) ([]entity.Site, *base.AppError) {
+	sites, err := repository.SiteRepo.FindSites(ctx)
+	if err != nil {
+		return nil, base.NewAppError(base.ErrorCode.Unexpected, err.Error())
+	}
+	return sites, nil
 }
 
-func (s siteServiceImpl) FindById(ctx context.Context, id primitive.ObjectID) (*entity.Site, error) {
+func (s siteServiceImpl) FindById(ctx *gin.Context, id primitive.ObjectID) (*entity.Site, error) {
 	return repository.SiteRepo.FindById(ctx, id)
 }
 
-func (s siteServiceImpl) ExistsById(ctx context.Context, id primitive.ObjectID) (bool, error) {
+func (s siteServiceImpl) ExistsById(ctx *gin.Context, id primitive.ObjectID) (bool, error) {
 	return repository.SiteRepo.ExistsById(ctx, id)
 }
 
-func (s siteServiceImpl) DeleteById(ctx context.Context, id primitive.ObjectID) error {
+func (s siteServiceImpl) DeleteById(ctx *gin.Context, id primitive.ObjectID) error {
 	return repository.SiteRepo.DeleteById(ctx, id)
 }
 
-func (s siteServiceImpl) FindSettings(ctx context.Context, siteId primitive.ObjectID) (*entity.SiteSettings, error) {
-	site, err := SiteService.FindById(ctx, siteId)
+func (s siteServiceImpl) FindSettings(ctx *gin.Context, siteId primitive.ObjectID) (*entity.SiteSettings, *base.AppError) {
+	exists, err := SiteService.ExistsById(ctx, siteId)
 	if err != nil {
-		return nil, err
+		zap.L().Warn("unexpected error occurs while checking if the site exists", zap.Error(err),
+			zap.String("siteId", primitive.ObjectID.Hex(siteId)))
+		return nil, base.NewAppError(base.ErrorCode.Unexpected, err.Error())
+	}
+	if !exists {
+		zap.L().Warn("site not found", zap.String("siteId", primitive.ObjectID.Hex(siteId)))
+		return nil, base.NewAppError(base.ErrorCode.NotFound)
 	}
 
-	return repository.SiteRepo.FindSettings(ctx, siteId)
+	settings, err := repository.SiteRepo.FindSettings(ctx, siteId)
+	if err != nil {
+		siteIdString := primitive.ObjectID.Hex(siteId)
+		zap.L().Warn("unexpected error occurs while finding site settings",
+			zap.String("siteId", siteIdString), zap.Error(err))
+		msg := fmt.Sprintf("site settings(%v): %v", siteIdString, err.Error())
+		return nil, base.NewAppError(base.ErrorCode.Unexpected, msg)
+	}
+	return settings, nil
 }
 
-func (s siteServiceImpl) SaveSettings(ctx context.Context, siteSettings *entity.SiteSettings) (*entity.SiteSettings, error) {
+func (s siteServiceImpl) SaveSettings(ctx *gin.Context, siteSettings *entity.SiteSettings) (*entity.SiteSettings, error) {
 	return repository.SiteRepo.SaveSettings(ctx, siteSettings)
 }

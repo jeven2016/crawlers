@@ -4,7 +4,6 @@ import (
 	"crawlers/pkg/base"
 	"crawlers/pkg/model/dto"
 	"crawlers/pkg/model/entity"
-	"crawlers/pkg/repository"
 	"crawlers/pkg/service"
 	"github.com/gin-gonic/gin"
 	"github.com/jeven2016/mylibs/system"
@@ -23,12 +22,13 @@ func NewSiteHandler() *SiteHandler {
 }
 
 func (h *SiteHandler) FindSites(c *gin.Context) {
-	if sites, err := repository.SiteRepo.FindSites(c); err != nil {
+	if sites, err := service.SiteService.FindSites(c); err != nil {
 		zap.L().Warn("failed to find sites", zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusInternalServerError,
-			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
+			base.FailsWithError(c, err))
 		return
 	} else {
+		zap.L().Info("found sites", zap.Int("count", len(sites)))
 		c.JSON(http.StatusOK, sites)
 	}
 }
@@ -39,12 +39,11 @@ func (h *SiteHandler) FindSiteCatalogs(c *gin.Context) {
 	if siteObjectId == nil {
 		return
 	}
-	if catalogs, err := repository.CatalogRepo.FindCatalogsBySiteId(c, *siteObjectId); err != nil {
+	if catalogs, err := service.CatalogService.FindCatalogsBySiteId(c, *siteObjectId); err != nil {
 		zap.L().Warn("failed to find catalogs", zap.String("siteId", siteId), zap.Error(err))
-		c.AbortWithStatusJSON(http.StatusInternalServerError,
-			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
-		return
+		c.AbortWithStatusJSON(http.StatusInternalServerError, base.FailsWithError(c, err))
 	} else {
+		zap.L().Info("found catalogs", zap.Int("count", len(catalogs)))
 		c.JSON(http.StatusOK, catalogs)
 	}
 }
@@ -58,26 +57,26 @@ func (h *SiteHandler) FindSiteSettings(c *gin.Context) {
 	site, err := service.SiteService.FindById(c, *siteObjectId)
 	if err != nil {
 		zap.L().Warn("failed to find site", zap.String("siteId", siteId), zap.Error(err))
-		c.AbortWithStatusJSON(http.StatusInternalServerError,
-			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
+		c.AbortWithStatusJSON(http.StatusInternalServerError, base.FailsWithError(c, err))
 		return
 	}
 	if site == nil {
+		zap.L().Warn("site not found", zap.String("siteId", siteId))
 		c.Status(http.StatusNotFound)
 		return
 	}
 
-	settings := service.ConfigService.GetConfig().CrawlerSettings
 	if siteSettings, err := service.SiteService.FindSettings(c, *siteObjectId); err != nil {
 		zap.L().Warn("failed to find site settings", zap.String("siteId", siteId), zap.Error(err))
-		c.AbortWithStatusJSON(http.StatusInternalServerError,
-			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
+		c.AbortWithStatusJSON(base.HttpStatusCode(err), base.FailsWithError(c, err))
 		return
 	} else {
 		if siteSettings == nil {
+			zap.L().Warn("site settings not found", zap.String("siteId", siteId))
 			c.Status(http.StatusNotFound)
 			return
 		}
+		zap.L().Info("found site settings", zap.String("siteId", siteId))
 		c.JSON(http.StatusOK, siteSettings)
 	}
 }
@@ -95,14 +94,14 @@ func (h *SiteHandler) SaveSiteSettings(c *gin.Context) {
 
 	if siteSettings, err := service.SiteService.SaveSettings(c, &siteSettings); err != nil {
 		zap.L().Warn("failed to find site settings", zap.String("siteId", siteId), zap.Error(err))
-		c.AbortWithStatusJSON(http.StatusInternalServerError,
-			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
-		return
+		c.AbortWithStatusJSON(http.StatusInternalServerError, base.FailsWithError(c, err))
 	} else {
 		if siteSettings == nil {
+			zap.L().Warn("site settings not found even though save succeeded", zap.String("siteId", siteId))
 			c.Status(http.StatusNotFound)
 			return
 		}
+		zap.L().Info("Site settings saved successfully", zap.Any("siteSettings", siteSettings))
 		c.JSON(http.StatusOK, siteSettings)
 	}
 }
@@ -143,10 +142,9 @@ func (h *SiteHandler) DeleteSite(c *gin.Context) {
 	if objectId == nil {
 		return
 	}
-	if err := repository.SiteRepo.DeleteById(c, *objectId); err != nil {
+	if err := service.SiteService.DeleteById(c, *objectId); err != nil {
 		zap.L().Warn("failed to delete site", zap.String("siteId", siteId), zap.Error(err))
-		c.AbortWithStatusJSON(http.StatusInternalServerError,
-			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
+		c.AbortWithStatusJSON(http.StatusInternalServerError, base.FailsWithError(c, err))
 		return
 	}
 	zap.L().Info("site is deleted", zap.String("siteId", siteId))
@@ -157,10 +155,10 @@ func (h *SiteHandler) DeleteSite(c *gin.Context) {
 func (h *SiteHandler) ensureValidSiteId(c *gin.Context, siteId string) *primitive.ObjectID {
 	objectId := ensureValidId(c, siteId)
 	if objectId != nil {
-		siteExists, err := repository.SiteRepo.ExistsById(c, *objectId)
+		siteExists, err := service.SiteService.ExistsById(c, *objectId)
 		if !siteExists || err != nil {
 			zap.L().Warn("site does not exist", zap.String("siteId", siteId), zap.Error(err))
-			c.AbortWithStatusJSON(http.StatusBadRequest, base.FailsWithParams(base.ErrSiteNotFound, siteId))
+			c.AbortWithStatusJSON(http.StatusBadRequest, base.Fails(c, base.ErrorCode.SiteNotFound))
 			return nil
 		}
 	}
@@ -189,19 +187,17 @@ func (h *SiteHandler) CreateCatalog(c *gin.Context) {
 
 	//check if the site exists and cache the result
 	exists, err := utils.Exists(c, utils.GenKey(base.SiteKeyExistsPrefix, catalog.SiteId.Hex()), func() (any, error) {
-		return repository.SiteRepo.ExistsById(c, catalog.SiteId)
+		return service.SiteService.ExistsById(c, catalog.SiteId)
 	})
 	if err != nil {
 		zap.L().Warn("failed to check if any sites exist with this siteId", zap.String("siteId", catalog.SiteId.Hex()),
 			zap.Error(err))
-		c.AbortWithStatusJSON(http.StatusInternalServerError,
-			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
+		c.AbortWithStatusJSON(http.StatusInternalServerError, base.FailsWithError(c, err))
 		return
 	}
 	if !exists {
 		zap.L().Warn("no site exists with this siteId", zap.String("siteId", catalog.SiteId.Hex()))
-		c.AbortWithStatusJSON(http.StatusBadRequest,
-			base.FailsWithParams(base.ErrSiteNotFound, catalog.SiteId.Hex()))
+		c.AbortWithStatusJSON(http.StatusBadRequest, base.Fails(c, base.ErrorCode.SiteNotFound))
 		return
 	}
 
@@ -219,26 +215,27 @@ func (h *SiteHandler) doCreate(c *gin.Context, req *dto.CreateRequest) {
 	col := system.GetSystem().GetCollection(req.Collection)
 
 	exists, err := utils.Exists(c, req.RedisCacheKey, func() (any, error) {
-		return repository.CatalogRepo.ExistsByName(c, req.Name)
+		return service.CatalogService.ExistsByName(c, req.Name)
 	})
 	if err != nil {
 		zap.L().Warn("failed to check if it exists", zap.Error(err), zap.Any("request", req.Entity))
-		c.AbortWithStatusJSON(http.StatusInternalServerError,
-			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
+		c.AbortWithStatusJSON(http.StatusInternalServerError, base.FailsWithError(c, err))
 		return
 	}
 
 	if exists {
 		zap.L().Warn("it's duplicated to save", zap.Any(req.Key, req.Name), zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusBadRequest,
-			base.FailsWithParams(base.ErrDuplicated, req.Key, req.Name))
+			base.FailsWithParams(c, base.ErrorCode.Duplicated, map[string]string{
+				req.Key: req.Name,
+			}))
 		return
 	}
 
 	if obj, err := col.InsertOne(c, req.Entity); err != nil {
 		zap.L().Warn("failed to save", zap.Error(err), zap.Any(req.Key, req.Name))
 		c.AbortWithStatusJSON(http.StatusInternalServerError,
-			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
+			base.FailsWithMessage(base.ErrorCode.Unexpected, err.Error()))
 		return
 	} else {
 		c.JSON(http.StatusCreated, obj)
@@ -262,12 +259,13 @@ func (h *SiteHandler) FindSiteById(c *gin.Context) {
 		return
 	}
 
-	if site, err := repository.SiteRepo.FindById(c, *objectId); err != nil {
+	if site, err := service.SiteService.FindById(c, *objectId); err != nil {
 		zap.L().Warn("failed to find site", zap.String("siteId", siteId), zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusInternalServerError,
-			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
+			base.FailsWithMessage(base.ErrorCode.Unexpected, err.Error()))
 		return
 	} else {
+		zap.L().Info("found site", zap.Any("site", site))
 		c.JSON(http.StatusOK, site)
 	}
 }
@@ -286,11 +284,12 @@ func (h *SiteHandler) FindCatalogById(c *gin.Context) {
 	objectId := ensureValidId(c, catalogId)
 
 	if objectId != nil {
-		if catalog, err := repository.CatalogRepo.FindById(c, *objectId); err != nil {
+		if catalog, err := service.CatalogService.FindById(c, *objectId); err != nil {
 			zap.L().Warn("failed to find catalog", zap.String("catalogId", catalogId), zap.Error(err))
 			c.AbortWithStatusJSON(http.StatusInternalServerError,
-				base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
+				base.FailsWithMessage(base.ErrorCode.Unexpected, err.Error()))
 		} else {
+			zap.L().Info("found catalog", zap.Any("catalog", catalog))
 			c.JSON(http.StatusOK, catalog)
 		}
 	}

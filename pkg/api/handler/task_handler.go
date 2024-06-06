@@ -3,7 +3,6 @@ package handler
 import (
 	"crawlers/pkg/base"
 	"crawlers/pkg/model/entity"
-	"crawlers/pkg/repository"
 	"crawlers/pkg/service"
 	"crawlers/pkg/stream"
 	"github.com/duke-git/lancet/v2/slice"
@@ -30,12 +29,13 @@ func (h *TaskHandler) FindTasksOfCatalogPage(c *gin.Context) {
 	if objectId == nil {
 		return
 	}
-	if catalogs, err := repository.CatalogPageTaskRepo.FindTasksByCatalogId(c, *objectId); err != nil {
+	if catalogs, err := service.CatalogPageTaskService.FindTasksByCatalogId(c, *objectId); err != nil {
 		zap.L().Warn("failed to find catalogPage tasks", zap.String("catalogId", catalogId), zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusInternalServerError,
-			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
+			base.FailsWithMessage(base.ErrorCode.Unexpected, err.Error()))
 		return
 	} else {
+		zap.L().Info("found catalogPage tasks", zap.Int("count", len(catalogs)))
 		c.JSON(http.StatusOK, catalogs)
 	}
 }
@@ -47,12 +47,13 @@ func (h *TaskHandler) FindTasksOfNovel(c *gin.Context) {
 	if objectId == nil {
 		return
 	}
-	if novelTasks, err := repository.NovelTaskRepo.FindByCatalogId(c, *objectId); err != nil {
+	if novelTasks, err := service.NovelTaskService.FindByCatalogId(c, *objectId); err != nil {
 		zap.L().Warn("failed to find novel tasks", zap.String("catalogId", catalogId), zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusInternalServerError,
-			base.FailsWithMessage(base.ErrCodeUnknown, err.Error()))
+			base.FailsWithMessage(base.ErrorCode.Unexpected, err.Error()))
 		return
 	} else {
+		zap.L().Info("found novel tasks", zap.Int("count", len(novelTasks)))
 		c.JSON(http.StatusOK, novelTasks)
 	}
 }
@@ -84,14 +85,14 @@ func (h *TaskHandler) CreateCatalogPageTask(c *gin.Context) {
 
 	//if multiple pages need to handle
 	if sp = stream.GetSiteTaskProcessor(site.Name); sp == nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, base.Fails(base.ErrCodeUnSupportedCatalog))
+		c.AbortWithStatusJSON(http.StatusBadRequest, base.Fails(c, base.ErrorCode.ProcessorNotFound))
 		zap.L().Warn("no processor found for this siteKey", zap.String("siteKey", site.Name))
 		return
 	}
 	//parse all page urls if page parameter is specified in such format: page=1-5
 	urls, err = sp.ParsePageUrls(site.Name, pageTask.Url)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, base.FailsWithParams(base.ErrParsePageUrl, err.Error()))
+		c.AbortWithStatusJSON(http.StatusBadRequest, base.FailsWithMessage(base.ErrorCode.IllegalPageUrl, err.Error()))
 		zap.L().Warn("failed to process pageUrl", zap.String("pageUrl", pageTask.Url), zap.Error(err))
 		return
 	}
@@ -114,15 +115,14 @@ func (h *TaskHandler) CreateCatalogPageTask(c *gin.Context) {
 
 		//publish it
 		if err = system.GetSystem().RedisClient.PublishMessage(c, pageMsg, stream.CatalogPageUrlStream); err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError,
-				base.FailsWithParams(base.ErrPublishMessage, err.Error()))
+			c.AbortWithStatusJSON(http.StatusInternalServerError, base.FailsWithError(c, err))
 			zap.L().Warn("failed to publish a message",
 				zap.String("pageUrl", pageTask.Url), zap.Error(err))
 			return
 		}
 	}
 	zap.S().Info("published", strconv.Itoa(len(urls)), "task messages for catalog page:", pageTask.Url)
-	c.JSON(http.StatusAccepted, base.SuccessCode(base.ErrCodeTaskSubmitted))
+	c.Status(http.StatusAccepted)
 }
 
 // check if both site and catalog exist
@@ -131,15 +131,15 @@ func (h *TaskHandler) getTaskEntity(c *gin.Context, catalogId primitive.ObjectID
 	var catalog *entity.Catalog
 	catalogStringId := catalogId.Hex()
 	siteStringId := catalogId.Hex()
-	if catalog, err = repository.CatalogRepo.FindById(c, catalogId); err != nil {
+	if catalog, err = service.CatalogService.FindById(c, catalogId); err != nil {
 		zap.L().Warn("catalog does not exist", zap.String("catalogId", catalogStringId), zap.Error(err))
-		c.AbortWithStatusJSON(http.StatusBadRequest, base.FailsWithParams(base.ErrCatalogNotFound, catalogStringId))
+		c.AbortWithStatusJSON(http.StatusInternalServerError, base.FailsWithError(c, err))
 		hasError = true
 		return
 	}
-	if site, err = repository.SiteRepo.FindById(c, catalog.SiteId); err != nil {
+	if site, err = service.SiteService.FindById(c, catalog.SiteId); err != nil {
 		zap.L().Warn("site does not exist", zap.String("siteId", siteStringId), zap.Error(err))
-		c.AbortWithStatusJSON(http.StatusBadRequest, base.FailsWithParams(base.ErrSiteNotFound, siteStringId))
+		c.AbortWithStatusJSON(http.StatusInternalServerError, base.FailsWithError(c, err))
 		hasError = true
 	}
 	return
@@ -152,7 +152,7 @@ func (h *TaskHandler) getTaskEntity(c *gin.Context, catalogId primitive.ObjectID
 // @Param   request	body   entity.NovelTask   true   "Novel Task"
 // @Accept  application/json
 // @Produce application/json
-// @Success 200
+// @Success 201
 // @Router /tasks/novels [post]
 func (h *TaskHandler) CreateNovelPageTask(c *gin.Context) {
 	var novelTask entity.NovelTask
@@ -166,7 +166,7 @@ func (h *TaskHandler) CreateNovelPageTask(c *gin.Context) {
 	//check if the url is excluded
 	if slice.Contain(service.ConfigService.GetConfig().CrawlerSettings.ExcludedNovelUrls, novelTask.Url) {
 		zap.L().Warn("excluded novel url", zap.String("url", novelTask.Url))
-		c.AbortWithStatusJSON(http.StatusBadRequest, base.Fails(base.ErrExcludedNovel))
+		c.AbortWithStatusJSON(http.StatusBadRequest, base.Fails(c, base.ErrorCode.ExcludedNovelPageTask))
 		return
 	}
 
@@ -178,25 +178,29 @@ func (h *TaskHandler) CreateNovelPageTask(c *gin.Context) {
 
 	if err := system.GetSystem().RedisClient.PublishMessage(c, novelTask, stream.NovelUrlStream); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError,
-			base.FailsWithParams(base.ErrPublishMessage, err.Error()))
+			base.FailsWithError(c, err))
 		zap.L().Warn("failed to publish a message", zap.String("pageUrl", novelTask.Url), zap.Error(err))
 		return
 	}
+	zap.S().Info("published a task message for novel page:", novelTask.Url)
+	c.Status(http.StatusCreated)
 }
 
 func (h *TaskHandler) DeleteNovelPageTasks(c *gin.Context) {
 	ids := c.Query("idArray")
 
 	if ids == "" {
-		c.AbortWithStatusJSON(http.StatusBadRequest, base.FailsWithParams(base.ErrRequired, "idArray"))
+		c.AbortWithStatusJSON(http.StatusBadRequest, base.Fails(c, base.ErrorCode.IdsRequired))
+		zap.L().Warn("idArray is required", zap.Any("idArray", ids))
 		return
 	}
 	idArray := strings.Split(ids, ",")
 
 	if err := service.NovelService.DeleteByIds(c, idArray); err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, base.FailsWithParams(base.ErrCodeUnknown, err.Error()))
+		c.AbortWithStatusJSON(http.StatusInternalServerError, base.FailsWithError(c, err))
 		zap.L().Warn("failed to delete novel tasks", zap.Any("request", ids), zap.Error(err))
 		return
 	}
+	zap.S().Info("novel page(s) deleted", ids)
 	c.Status(http.StatusNoContent)
 }

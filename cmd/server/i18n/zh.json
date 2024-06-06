@@ -1,9 +1,15 @@
 {
-  "PARAM_REQUIRED": "参数{{ .name }}不能为空",
   "PARAM_INVALID": "无效的参数值{{ .name }}",
   "BAD_REQUEST": "参数检查出错: {{ .error }}",
   "UNEXPECTED_ERROR": "操作失败: {{.error }}",
   "UNSUPPORTED_ACTION": "该操作不支持",
   "NAME_CONFLICTS": "名称冲突",
-  "NOT_FOUND": "资源不存在，请确认后再试"
+  "NOT_FOUND": "资源不存在，请确认后再试",
+
+  "1003": "参数{{ .name }}不能为空",
+
+
+  "1004": "出现冲突, {{ .key }}{{ .name }}已存在",
+  "1100": "站点不存在",
+  "1101": "没有对应的处理器"
 }
